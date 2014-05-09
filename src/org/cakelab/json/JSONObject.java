@@ -14,7 +14,7 @@ public class JSONObject extends HashMap<String, Object>{
 			int read;
 			try {
 				while ((read = reader.read()) > 0) {
-					if (Character.isSupplementaryCodePoint(read)) throw new Error("Supplimentary code points (extended unicode) is not supported by JSON");
+					if (Character.isSupplementaryCodePoint(read)) throw new Error("Supplimentary code points (extended unicode) are not supported by JSON");
 					appendCharacter(sb, (char)read);
 				}
 			} catch (Throwable e) {
