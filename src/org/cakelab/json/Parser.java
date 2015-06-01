@@ -11,11 +11,11 @@ public class Parser {
 		scanner = new Scanner(jsonString);
 	}
 
-	public JSONObject parse() throws IOException {
+	public JSONObject parse() throws IOException, JSONParserException {
 		return parseObject();
 	}
 
-	private JSONObject parseObject() throws IOException {
+	private JSONObject parseObject() throws IOException, JSONParserException {
 		JSONObject o = new JSONObject();
 		
 		scanCharToken(Token.TYPE_LEFTBRACE);
@@ -27,7 +27,7 @@ public class Parser {
 		return o;
 	}
 
-	private void parseNVSequence(JSONObject o, int endToken) throws IOException {
+	private void parseNVSequence(JSONObject o, int endToken) throws IOException, JSONParserException {
 		char lookahead = scanner.getLookahead();
 		if (lookahead == endToken) return;
 		while (true) {
@@ -40,7 +40,7 @@ public class Parser {
 		
 	}
 
-	private void parseValueSequence(JSONArray o, int endToken) throws IOException {
+	private void parseValueSequence(JSONArray o, int endToken) throws IOException, JSONParserException {
 		char lookahead = scanner.getLookahead();
 		if (lookahead == endToken) return;
 		while (true) {
@@ -53,7 +53,7 @@ public class Parser {
 		
 	}
 
-	private void parseNameValuePair(JSONObject parent) throws IOException {
+	private void parseNameValuePair(JSONObject parent) throws IOException, JSONParserException {
 		if (scanner.nextName() != Token.TYPE_NAME) error("expected a name");
 		String name = scanner.getName();
 		
@@ -66,7 +66,7 @@ public class Parser {
 		parent.put(name, value);
 	}
 
-	private Object parseValue() throws IOException {
+	private Object parseValue() throws IOException, JSONParserException {
 		Object value = null;
 		char lookahead = scanner.getLookahead();
 		switch(lookahead) {
@@ -86,7 +86,7 @@ public class Parser {
 		return value;
 	}
 
-	private JSONArray parseArray() throws IOException {
+	private JSONArray parseArray() throws IOException, JSONParserException {
 		JSONArray a = new JSONArray();
 		scanCharToken(Token.TYPE_LEFTBRACKET);
 		if (scanner.getLookahead() != Token.TYPE_RIGHTBRACKET) {
@@ -97,13 +97,13 @@ public class Parser {
 		return a;
 	}
 
-	private void scanCharToken(int tokenCharacter) throws IOException {
+	private void scanCharToken(int tokenCharacter) throws IOException, JSONParserException {
 		if (scanner.next() != (char)tokenCharacter) error("expected token '"+  (char)tokenCharacter + "'");
 		
 	}
 
-	private void error(String string) {
-		throw new Error(":" + scanner.getLine() + ":" + scanner.getColumn() + ": " + string);
+	private void error(String string) throws JSONParserException {
+		throw new JSONParserException(":" + scanner.getLine() + ":" + scanner.getColumn() + ": " + string);
 	}
 
 }

@@ -13,12 +13,13 @@ public class Scanner {
 	private int line;
 	private int column;
 
-	private double number_value;
+	private double double_value;
 	private String string_value;
 	private boolean boolean_value;
 	
 	private String name;
 	private Object value;
+	private long int_value;
 	
 	public Scanner(Reader reader) throws IOException {
 		this.reader = reader;
@@ -71,7 +72,7 @@ public class Scanner {
 	}
 	
 	public double getNumberValue() {
-		return number_value;
+		return double_value;
 	}
 	
 	public String getStringValue() {
@@ -145,8 +146,13 @@ public class Scanner {
 			s.append(c);
 		}
 		try {
-			number_value = Double.parseDouble(s.toString());
-			value = number_value;
+			try {
+				int_value = Long.parseLong(s.toString());
+				value = int_value;
+			} catch (NumberFormatException e) {
+				double_value = Double.parseDouble(s.toString());
+				value = double_value;
+			}
 		} catch (NumberFormatException e) {
 			error(s.toString() + " does not comply to json number format");
 		}
