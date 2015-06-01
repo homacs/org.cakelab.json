@@ -32,7 +32,7 @@ public class Test {
 
 		long[] int_array_1;
 		double[] double_array_2;
-		private Primitives[] object_array_3;
+		Primitives[] object_array_3;
 		
 		
 		ArrayMembers() {
