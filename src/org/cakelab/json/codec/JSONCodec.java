@@ -30,6 +30,8 @@ public class JSONCodec {
 			JSONObject json = parser.parse();
 			
 			return _decodeObject(json, target);
+		} catch (JSONCodecException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new JSONCodecException(e);
 		}
@@ -45,6 +47,8 @@ public class JSONCodec {
 			JSONObject json = parser.parse();
 			
 			return _decodeObject(json, type);
+		} catch (JSONCodecException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new JSONCodecException(e);
 		}
