@@ -25,5 +25,8 @@ public class JSONArray extends ArrayList<Object>{
 		return JSONObject.doublevalue(get(index));
 	}
 
+	public long getLong(int index) {
+		return JSONObject.longvalue(get(index));
+	}
 	
 }
