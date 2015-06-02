@@ -8,7 +8,9 @@ public class JSONObject extends HashMap<String, Object>{
 	private static final long serialVersionUID = 1L;
 
 	public static void appendValue(StringBuffer sb, Object o) {
-		if (o instanceof String) {
+		if (o == null) {
+			sb.append("null");
+		} else if (o instanceof String) {
 			sb.append('\"');
 			StringReader reader = new StringReader(o.toString());
 			int read;
@@ -88,6 +90,33 @@ public class JSONObject extends HashMap<String, Object>{
 		}
 		s.append("}");
 		return s.toString();
+	}
+
+	public double getDouble(String key) {
+		Object o = get(key);
+		return doublevalue(o);
+	}
+
+	public long getLong(String key) {
+		Object o = get(key);
+		return longvalue(o);
+	}
+	
+	static double doublevalue(Object o) {
+		if (o instanceof Long) {
+			return (Long)o;
+		} else {
+			return (Double)o;
+		}
+	}
+
+	static long longvalue(Object o) {
+		if (o instanceof Long) {
+			return (Long)o;
+		} else {
+			return ((Double)o).longValue();
+		}
+
 	}
 
 }

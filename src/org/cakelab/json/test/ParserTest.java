@@ -6,7 +6,7 @@ import org.cakelab.json.JSONArray;
 import org.cakelab.json.JSONObject;
 import org.cakelab.json.Parser;
 
-public class Main {
+public class ParserTest {
 
 	private static String testName;
 	static {
@@ -38,6 +38,7 @@ public class Main {
 	private static void testComplexObject() {
 		testName = "complex object";
 		String jsonString = "{"
+				+ "\"null_value\": null, \n" 
 				+ "\"nv1\": 1 ,\n" 
 				+ "\"a1\": [1,2], \n" 
 				+ "\"array_with_object\": [3,{\"nv2\": 2}], \n" 
@@ -53,28 +54,31 @@ public class Main {
 			o = p.parse();
 			
 			o.toString();
-			assert(((Double) o.get("nv1")) == 1.0);
+			
+			assert(o.get("null_value") == null);
+			
+			assert(o.getDouble("nv1") == 1.0);
 
 			JSONArray a = (JSONArray) o.get("a1");
-			assert(((Double)a.get(0)) == 1);
-			assert(((Double)a.get(1)) == 2);
+			assert(a.getDouble(0) == 1);
+			assert(a.getDouble(1) == 2);
 			
 			a = (JSONArray) o.get("array_with_object");
-			assert(((Double)a.get(0)) == 3);
+			assert(a.getDouble(0) == 3);
 			JSONObject o_nested = (JSONObject) a.get(1);
-			assert(((Double)o_nested.get("nv2")) == 2);
+			assert(o_nested.getDouble("nv2") == 2);
 
 			a = (JSONArray) o.get("array_with_arrays");
 			JSONArray a_nested = (JSONArray) a.get(0);
-			assert(((Double)a_nested.get(0)) == 4);
-			assert(((Double)a_nested.get(1)) == 5);
+			assert(a_nested.getDouble(0) == 4);
+			assert(a_nested.getDouble(1) == 5);
 			a_nested = (JSONArray) a.get(1);
-			assert(((Double)a_nested.get(0)) == 6);
+			assert(a_nested.getDouble(0) == 6);
 
 			o_nested = (JSONObject) o.get("object_with_array");
 			a_nested = (JSONArray)o_nested.get("a2");
-			assert(((Double)a_nested.get(0)) == 7);
-			assert(((Double)a_nested.get(1)) == 8);
+			assert(a_nested.getDouble(0) == 7);
+			assert(a_nested.getDouble(1) == 8);
 			
 			pass();
 		} catch (Throwable t) {
@@ -138,13 +142,13 @@ public class Main {
 			p = new Parser(o.toString());
 			o = p.parse();
 			
-			assert((Double) o.get("n1") == Double.MIN_VALUE);
-			assert((Double) o.get("n2") == Double.MAX_VALUE);
-			assert((Double) o.get("n3") == -1.0);
-			assert((Double) o.get("n4") == +1.0);
-			assert((Double) o.get("n5") == -1.0);
-			assert((Double) o.get("n6") == +1.0);
-			assert((Double) o.get("n7") == n7);
+			assert(o.getDouble("n1") == Double.MIN_VALUE);
+			assert(o.getDouble("n2") == Double.MAX_VALUE);
+			assert(o.getDouble("n3") == -1.0);
+			assert(o.getDouble("n4") == +1.0);
+			assert(o.getLong("n5") == -1);
+			assert(o.getLong("n6") == +1);
+			assert(o.getDouble("n7") == n7);
 			pass();
 		} catch (Throwable t) {
 			fail(t);

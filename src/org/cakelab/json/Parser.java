@@ -1,14 +1,30 @@
 package org.cakelab.json;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 public class Parser {
 	Scanner scanner;
+	private boolean ignoreNull;
 	
 	
 	
-	public Parser(String jsonString) throws IOException {
+	public Parser(String jsonString, boolean ignoreNull) throws IOException {
+		this.ignoreNull = ignoreNull;
 		scanner = new Scanner(jsonString);
+	}
+
+	public Parser(String jsonString) throws IOException {
+		this(jsonString, false);
+	}
+
+	public Parser(InputStream jsonString, boolean ignoreNull) throws IOException {
+		this.ignoreNull = ignoreNull;
+		scanner = new Scanner(jsonString);
+	}
+
+	public Parser(InputStream jsonString) throws IOException {
+		this(jsonString, false);
 	}
 
 	public JSONObject parse() throws IOException, JSONParserException {
@@ -44,7 +60,8 @@ public class Parser {
 		char lookahead = scanner.getLookahead();
 		if (lookahead == endToken) return;
 		while (true) {
-			o.add(parseValue());
+			Object value = parseValue();
+			if (!(ignoreNull && value == null)) o.add(value);
 			lookahead = scanner.getLookahead();
 			if (lookahead == endToken) break;
 			
@@ -61,6 +78,9 @@ public class Parser {
 
 		
 		Object value = parseValue();
+		if (ignoreNull && value == null) {
+			return;
+		}
 		
 		
 		parent.put(name, value);

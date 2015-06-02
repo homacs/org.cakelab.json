@@ -14,10 +14,13 @@ import org.cakelab.json.Parser;
 public class JSONCodec {
 	
 	private UnsafeAllocator allocator = UnsafeAllocator.create();
+	private boolean ignoreNull;
 	
 	
-	public JSONCodec() {
+	public JSONCodec(boolean ignoreNull) {
+		this.ignoreNull = ignoreNull;
 	}
+	
 	
 	
 	/** decodes the given json string into the given target object. 
@@ -43,7 +46,7 @@ public class JSONCodec {
 	public Object decodeObject(String jsonString, Class<?> type) throws JSONCodecException {
 
 		try {
-			Parser parser = new Parser(jsonString);
+			Parser parser = new Parser(jsonString, ignoreNull);
 			JSONObject json = parser.parse();
 			
 			return _decodeObject(json, type);
@@ -193,7 +196,9 @@ public class JSONCodec {
 			boolean accessible = field.isAccessible();
 			field.setAccessible(true);
 			Object value = field.get(o);
-			if (value != null) {
+			if (value == null) {
+				if (!ignoreNull) json.put(field.getName(), null);
+			} else {
 				json.put(field.getName(), _encodeObject(value));
 			}
 			field.setAccessible(accessible);
@@ -205,7 +210,9 @@ public class JSONCodec {
 		JSONArray json = new JSONArray();
 		for (int i = 0; i < Array.getLength(o); i++) {
 			Object value = Array.get(o, i);
-			if (value != null) {
+			if (value == null) {
+				if (!ignoreNull) json.add(null);
+			} else {
 				json.add(_encodeObject(value));
 			}
 		}

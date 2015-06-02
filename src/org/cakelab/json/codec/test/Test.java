@@ -45,7 +45,7 @@ public class Test {
 	}
 	
 	
-	static JSONCodec codec = new JSONCodec();
+	static JSONCodec codec = new JSONCodec(true);
 	
 	
 	public static void main (String[] args) {

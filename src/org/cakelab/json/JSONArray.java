@@ -21,5 +21,9 @@ public class JSONArray extends ArrayList<Object>{
 		return sb.toString();
 	}
 
+	public double getDouble(int index) {
+		return JSONObject.doublevalue(get(index));
+	}
+
 	
 }
