@@ -189,10 +189,9 @@ public class JSONCodec {
 		JSONObject json = new JSONObject();
 		Class<?> type = o.getClass();
 		for (Field field : ReflectionHelper.getDeclaredFields(type)) {
-			int mod = field.getModifiers();
 			
 			// ignore transient fields
-			if (Modifier.isTransient(mod)) continue;
+			if (isIgnoredField(field)) continue;
 			boolean accessible = field.isAccessible();
 			field.setAccessible(true);
 			Object value = field.get(o);
@@ -205,6 +204,14 @@ public class JSONCodec {
 		}
 		return json;
 	}
+
+	private boolean isIgnoredField(Field field) {
+		int mod = field.getModifiers();
+
+		return Modifier.isTransient(mod) || Modifier.isStatic(mod) || Modifier.isNative(mod);
+	}
+
+
 
 	private JSONArray array2json(Object o) throws ArrayIndexOutOfBoundsException, IllegalArgumentException, IOException, JSONParserException, JSONCodecException {
 		JSONArray json = new JSONArray();
