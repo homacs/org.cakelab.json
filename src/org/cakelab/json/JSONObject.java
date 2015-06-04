@@ -6,8 +6,9 @@ import java.util.Iterator;
 
 public class JSONObject extends HashMap<String, Object>{
 	private static final long serialVersionUID = 1L;
+	
 
-	public static void appendValue(StringBuffer sb, Object o) {
+	public static void appendValue(JSONPrettyprint sb, Object o) {
 		if (o == null) {
 			sb.append("null");
 		} else if (o instanceof String) {
@@ -23,12 +24,16 @@ public class JSONObject extends HashMap<String, Object>{
 				throw new Error(e);
 			}
 			sb.append('\"');
+		} else if (o instanceof JSONArray) {
+			((JSONArray)o).toString(sb);
+		} else if (o instanceof JSONObject) {
+			((JSONObject)o).toString(sb);
 		} else {
 			sb.append(o);
 		}
 	}
 	
-	private static void appendCharacter(StringBuffer sb, char c) {
+	private static void appendCharacter(JSONPrettyprint sb, char c) {
 		switch (c) {
 		case '\"':
 			sb.append("\\\"");
@@ -69,11 +74,21 @@ public class JSONObject extends HashMap<String, Object>{
 		return c > 127;
 	}
 
+
+	
 	@Override
 	public String toString() {
-		StringBuffer s = new StringBuffer("{");
+		return toString(new JSONPrettyprint(true));
+	}
+	
+	
+	public String toString(JSONPrettyprint s) {
+		s.append("{");
+		s.indentInc();
+		s.appendNewLine();
 		Iterator<java.util.Map.Entry<String, Object>> it = entrySet().iterator();
 		if (it.hasNext()) {
+			s.appendIndent();
 			java.util.Map.Entry<String, Object> e = it.next();
 			s.append('\"');
 			s.append(e.getKey());
@@ -82,12 +97,17 @@ public class JSONObject extends HashMap<String, Object>{
 			while (it.hasNext()) {
 				e = it.next();
 				s.append(", ");
+				s.appendNewLine();
+				s.appendIndent();
 				s.append('\"');
 				s.append(e.getKey());
 				s.append("\": ");
 				appendValue(s, e.getValue());
 			}
+			s.appendNewLine();
 		}
+		s.indentDec();
+		s.appendIndent();
 		s.append("}");
 		return s.toString();
 	}
