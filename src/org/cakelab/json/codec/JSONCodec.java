@@ -8,7 +8,7 @@ import java.util.Map.Entry;
 
 import org.cakelab.json.JSONArray;
 import org.cakelab.json.JSONObject;
-import org.cakelab.json.JSONParserException;
+import org.cakelab.json.JSONException;
 import org.cakelab.json.Parser;
 
 public class JSONCodec {
@@ -213,7 +213,7 @@ public class JSONCodec {
 
 
 
-	private JSONArray array2json(Object o) throws ArrayIndexOutOfBoundsException, IllegalArgumentException, IOException, JSONParserException, JSONCodecException {
+	private JSONArray array2json(Object o) throws ArrayIndexOutOfBoundsException, IllegalArgumentException, IOException, JSONException, JSONCodecException {
 		JSONArray json = new JSONArray();
 		for (int i = 0; i < Array.getLength(o); i++) {
 			Object value = Array.get(o, i);

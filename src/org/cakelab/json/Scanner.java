@@ -44,7 +44,7 @@ public class Scanner {
 		return c;
 	}
 
-	public int nextName() throws IOException {
+	public int nextName() throws IOException, JSONException {
 		// skip whitespace
 		getLookahead();
 		
@@ -57,7 +57,7 @@ public class Scanner {
 		return name;
 	}
 
-	public int nextValue() throws IOException {
+	public int nextValue() throws IOException, JSONException {
 		char c = getLookahead();
 		if (c == Token.TYPE_DOUBLEQUOTES) return nextStringValue();
 		else if (Token.isDigit(c) || c == Token.TYPE_PLUS || c == Token.TYPE_MINUS) return nextNumberValue();
@@ -99,7 +99,7 @@ public class Scanner {
 		return 0;
 	}
 
-	private int nextBooleanValue() throws IOException {
+	private int nextBooleanValue() throws IOException, JSONException {
 		
 		char c = Character.toLowerCase(readCharacter());
 		if (c == 't') {
@@ -136,7 +136,7 @@ public class Scanner {
 		return 0;
 	}
 
-	private int nextNumberValue() throws IOException {
+	private int nextNumberValue() throws IOException, JSONException {
 		StringBuffer s = new StringBuffer();
 		char c = readCharacter();
 		s.append(c);
@@ -186,13 +186,13 @@ public class Scanner {
 		return result;
 	}
 
-	private int nextStringValue() throws IOException {
+	private int nextStringValue() throws IOException, JSONException {
 		string_value = readString();
 		value = string_value;
 		return Token.TYPE_STRING;
 	}
 
-	private String readString() throws IOException {
+	private String readString() throws IOException, JSONException {
 		StringBuffer s = new StringBuffer();
 		if (Token.TYPE_DOUBLEQUOTES != readCharacter()) {
 			error("expected '\"'");
@@ -208,7 +208,7 @@ public class Scanner {
 
 	
 	
-	private char readControlCharacter() throws IOException {
+	private char readControlCharacter() throws IOException, JSONException {
 		char c = readCharacter();
 		switch (c) {
 		case Token.TYPE_DOUBLEQUOTES: return '"';
@@ -225,18 +225,18 @@ public class Scanner {
 		return '\0';
 	}
 
-	private void error(String msg) {
-		throw new Error(": " + line + ':' + column + ": error:" + msg);
+	private void error(String msg) throws JSONException {
+		throw new JSONException(": " + line + ':' + column + ": error:" + msg);
 	}
 
-	private char readUnicodeControlSequence() throws IOException {
+	private char readUnicodeControlSequence() throws IOException, JSONException {
 		int hex = readHexDigits();
 
 		// casting unicode value to char is said to be the right conversion
 		return (char)hex;
 	}
 
-	private int readHexDigits() throws IOException {
+	private int readHexDigits() throws IOException, JSONException {
 		char c = readCharacterSkipWhitespace();
 		int radix = 16;
 		if (Token.isHexDigit(c)) {
