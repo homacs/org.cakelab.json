@@ -195,7 +195,7 @@ public class Scanner {
 	private String readString() throws IOException {
 		StringBuffer s = new StringBuffer();
 		if (Token.TYPE_DOUBLEQUOTES != readCharacter()) {
-			throw new Error("expected '\"'");
+			error("expected '\"'");
 		}
 		
 		char c;
