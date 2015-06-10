@@ -73,7 +73,7 @@ public class JSONCodec {
 	}
 
 	private Object _decodeObject(Object json, Class<?> type) throws JSONCodecException, InstantiationException {
-
+		if (json == null) return null;
 		if (json instanceof JSONObject) {
 			return json2object((JSONObject) json, allocator.newInstance(type));
 		} else if (json instanceof JSONArray) {
