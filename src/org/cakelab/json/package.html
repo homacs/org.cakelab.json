@@ -1,0 +1,138 @@
+<!DOCTYPE body PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<body>
+<p>
+Contains a JSON API and a JSON/POJO codec.
+</p>
+<p>
+This package provides two ways to deal with JSON documents. A simple API mapping the 
+JSON document to a hierarchical set of name value pairs and a codec to map between 
+JSON and sets of plain Java objects using the reflection API. Both methods will be 
+explained in the following sections.
+</p>
+
+<h1>Mapping to Sets of Name-Value Pairs</h1>
+<p>
+Using this method, you get access to the JSON content via the classes JSONObject 
+and JSONArray. The Parser creates a hierarchy of instances of these classes 
+according to the given JSON document.
+</p>
+<ul>
+<li>Instances of JSONObject contain name-value pairs while a value can reference 
+other instances of JSONObject or JSONArray. </li>
+<li>Instances of JSONArray contain a list of values while a value can be a reference 
+to another JSONObject or JSONArray again.
+</ul>
+<p>
+In both cases, values are decoded from the given string and stored in native types 
+such as Integer, Double, Boolean etc.
+</p>
+
+
+
+<h2>Example</h2>
+<p>The following JSON document:
+<pre>
+{
+  "member1": 1.0,
+  "member2": true,
+  "member3": [
+    {
+      "m1": "Hello my friend!"
+    },
+    {
+      "m1": null
+    }
+  ]
+}
+</pre>
+Can be parsed with an instance of the class Parser of this package:
+
+<pre>
+Parser p = new Parser(jsonString);
+JSONObject json = p.parse();
+</pre>
+<p>
+The given example above would result in an object hierarchy like this:
+</p>
+<ul>
+	<li>jsonObject
+		<ul>
+			<li>jsonArray
+				<ul>
+					<li>jsonObject</li>
+					<li>jsonObject</li>
+				</ul>
+			</li>
+		</ul>
+	</li>
+</ul>
+
+<p>
+Access to the member variables is provided via <code>get</code> and <code>set</code> methods.
+</p>
+<pre>
+if ((boolean)json.get("member2")) {
+	json.get("member3").get(1).set("m1", "You'r not my friend, dude!");
+}
+</pre>
+<p>
+Both classes (JSONObject and JSONArray) provide a method <code>toString</code> to 
+receive the JSON document.
+</p>
+<pre>
+String jsonString = jsonObject.toString();
+</pre>
+
+ 
+
+
+<h1>Mapping to Sets of Plain Java Objects</h1>
+<p>
+Using this method is based on the use of the JSONCodec in this package. 
+It allows you to map JSON documents directly to Java objects and vice versa. 
+This of course requires that the class of the object contains the member 
+variables which exist in the JSON document.
+</p>
+<p>
+<em>Note:</em> The codec internally uses the Parser class to turn the JSON document 
+in instances of JSONObject and JSONArray before it maps it to your Java object. 
+A better solution (possibly coming in future) is to parse it directly to the object.
+
+<h2>Example</h2>
+To map the JSON document given above to Java objects you would need classes like this: 
+<pre>
+class A {
+	double member1;
+	boolean member2;
+	B[] member3;
+	/* hide this from the JSON codec */
+	transient int dont_mind_me;
+}
+class B {
+	String m1;
+}
+</pre>
+<p>
+The JSONCodec is used to decode the given JSON document to your Java object.
+</p>
+<pre>
+JSONCodec codec = new JSONCodec();
+A obj = new A();
+codec.decodeObject(jsonString, obj);
+</pre>
+<p>
+The codec is also used to turn any Java object into a JSON document.
+</p>
+<pre>
+String jsonString = codec.encodeObject(a);
+</pre>
+<h2>Rules</h2>
+<ul>
+<li><code>static</code> or <code>transient</code> members will be ignored by the codec.</li>
+<li>References between objects have to establish a hierarchy. Cyclic dependencies cannot be 
+resolved by the codec and will result in an exception. Use the <code>transient</code> keyword 
+to solve cyclic dependencies manually.</li>
+</ul>
+</body>
+</html>
