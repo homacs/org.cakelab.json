@@ -73,7 +73,9 @@ Access to the member variables is provided via <code>get</code> and <code>set</c
 </p>
 <pre>
 if ((boolean)json.get("member2")) {
-	json.get("member3").get(1).set("m1", "You'r not my friend, dude!");
+	JSONArray array = (JSONArray)json.get("member3")
+	JSONObject object = (JSONObject)array.get(1);
+	object.set("m1", "You'r not my friend, dude!");
 }
 </pre>
 <p>
@@ -120,6 +122,13 @@ The JSONCodec is used to decode the given JSON document to your Java object.
 JSONCodec codec = new JSONCodec();
 A obj = new A();
 codec.decodeObject(jsonString, obj);
+</pre>
+<p>Access is much simpler this way, as the next code fragment 
+demonstrates, which realises the same functionality as in the example above.</p>
+<pre>
+if (obj.member2) {
+	obj.member3[1].m1 = "Now we'r talking!";
+}
 </pre>
 <p>
 The codec is also used to turn any Java object into a JSON document.
