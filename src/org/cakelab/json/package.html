@@ -11,7 +11,7 @@ JSON and sets of plain Java objects using the reflection API. Both methods will 
 explained in the following sections.
 </p>
 
-<h1>Mapping to Sets of Name-Value Pairs</h1>
+<h3>Mapping to Sets of Name-Value Pairs</h3>
 <p>
 Using this method, you get access to the JSON content via the classes JSONObject 
 and JSONArray. The Parser creates a hierarchy of instances of these classes 
@@ -30,7 +30,7 @@ such as Integer, Double, Boolean etc.
 
 
 
-<h2>Example</h2>
+<h4>Example</h4>
 <p>The following JSON document:
 <pre>
 {
@@ -89,7 +89,7 @@ String jsonString = jsonObject.toString();
  
 
 
-<h1>Mapping to Sets of Plain Java Objects</h1>
+<h3>Mapping to Sets of Plain Java Objects</h3>
 <p>
 Using this method is based on the use of the JSONCodec in this package. 
 It allows you to map JSON documents directly to Java objects and vice versa. 
@@ -101,7 +101,7 @@ variables which exist in the JSON document.
 in instances of JSONObject and JSONArray before it maps it to your Java object. 
 A better solution (possibly coming in future) is to parse it directly to the object.
 
-<h2>Example</h2>
+<h4>Example</h4>
 To map the JSON document given above to Java objects you would need classes like this: 
 <pre>
 class A {
