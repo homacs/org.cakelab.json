@@ -1,9 +1,12 @@
 package org.cakelab.json.codec;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.charset.Charset;
 import java.util.Map.Entry;
 
 import org.cakelab.json.JSONArray;
@@ -40,7 +43,44 @@ public class JSONCodec {
 		}
 	}
 	
-	/** decodes the given json string into the given target object. 
+	/** decodes the given json string from input stream into the given target object. 
+	 * @throws JSONCodecException 
+	 */
+	public Object decodeObject(InputStream inputStream, Object target) throws JSONCodecException {
+
+		try {
+			Parser parser = new Parser(inputStream);
+			JSONObject json = parser.parse();
+			
+			return _decodeObject(json, target);
+		} catch (JSONCodecException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new JSONCodecException(e);
+		}
+	}
+
+	
+	/** decodes the given json string from input stream into an object of the given target type. 
+	 * @throws JSONCodecException 
+	 */
+	public Object decodeObject(InputStream inputStream,
+			Class<?> target)  throws JSONCodecException {
+		try {
+			Parser parser = new Parser(inputStream);
+			JSONObject json = parser.parse();
+			
+			return _decodeObject(json, target);
+		} catch (JSONCodecException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new JSONCodecException(e);
+		}
+	}
+
+
+	
+	/** decodes the given json string into an object of the given target type. 
 	 * @throws JSONCodecException 
 	 */
 	public Object decodeObject(String jsonString, Class<?> type) throws JSONCodecException {
@@ -162,6 +202,22 @@ public class JSONCodec {
 		}
 	}
 
+	public void encodeObject(Object o, OutputStream out) throws JSONCodecException {
+		Object json;
+		
+		if (o == null) {
+			throw new JSONCodecException("Cannot encode a toplevel null object");
+		}
+		
+		try {
+			json = _encodeObject(o);
+			byte[] bytes = json.toString().getBytes();
+			out.write(bytes);
+		} catch (Exception e) {
+			throw new JSONCodecException(e);
+		}
+	}
+
 	/** returns a JSONObject or JSONArray depending on the given 
 	 * object to be encoded */
 	private Object _encodeObject(Object o) throws JSONCodecException {
@@ -225,6 +281,8 @@ public class JSONCodec {
 		}
 		return json;
 	}
+
+
 
 
 

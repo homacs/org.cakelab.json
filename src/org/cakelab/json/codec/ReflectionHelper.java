@@ -55,7 +55,7 @@ public class ReflectionHelper {
 	public static
 	boolean isPrimitive(Class<?> type) {
 		return type.isPrimitive() || type.equals(String.class)
-				 || type.equals(Long.class) || type.equals(Integer.class)
+				 || type.equals(Long.class) || type.equals(Integer.class) || type.equals(Short.class)
 				  || type.equals(Double.class) || type.equals(Float.class)
 				   || type.equals(Byte.class) || type.equals(Character.class)
 				    || type.equals(Boolean.class);
