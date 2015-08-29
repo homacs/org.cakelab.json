@@ -139,4 +139,8 @@ public class JSONObject extends HashMap<String, Object>{
 
 	}
 
+	public String getString(String key) {
+		return (String)get(key);
+	}
+
 }

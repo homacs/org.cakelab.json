@@ -98,7 +98,15 @@ public class JSONCodec {
 	}
 	
 	
-	
+	public Object decodeObject(JSONObject task, Class<?> clazz) throws JSONCodecException {
+		try {
+			return _decodeObject(task, clazz);
+		} catch (InstantiationException e) {
+			throw new JSONCodecException(e);
+		}
+	}
+
+
 	
 	private Object _decodeObject(Object json, Object target) throws JSONCodecException {
 
@@ -281,6 +289,8 @@ public class JSONCodec {
 		}
 		return json;
 	}
+
+
 
 
 
