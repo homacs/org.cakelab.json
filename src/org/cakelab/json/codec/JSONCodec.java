@@ -98,9 +98,9 @@ public class JSONCodec {
 	}
 	
 	
-	public Object decodeObject(JSONObject task, Class<?> clazz) throws JSONCodecException {
+	public Object decodeObject(JSONObject json, Class<?> clazz) throws JSONCodecException {
 		try {
-			return _decodeObject(task, clazz);
+			return _decodeObject(json, clazz);
 		} catch (InstantiationException e) {
 			throw new JSONCodecException(e);
 		}
