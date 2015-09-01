@@ -138,6 +138,7 @@ public class JSONCodec {
 		try {
 			for (Entry<String, Object> e : json.entrySet()) {
 					Field field = ReflectionHelper.getDeclaredField(type, e.getKey());
+					if (isIgnoredField(field)) continue;
 					boolean accessible = field.isAccessible();
 					field.setAccessible(true);
 					if (ReflectionHelper.isPrimitive(field.getType())) {
