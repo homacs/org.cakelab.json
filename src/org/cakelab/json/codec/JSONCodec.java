@@ -6,12 +6,11 @@ import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.nio.charset.Charset;
 import java.util.Map.Entry;
 
 import org.cakelab.json.JSONArray;
-import org.cakelab.json.JSONObject;
 import org.cakelab.json.JSONException;
+import org.cakelab.json.JSONObject;
 import org.cakelab.json.Parser;
 
 public class JSONCodec {
