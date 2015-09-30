@@ -14,13 +14,21 @@ import org.cakelab.json.JSONObject;
 import org.cakelab.json.Parser;
 
 public class JSONCodec {
+	// TODO: needs enum support
+	
 	
 	private UnsafeAllocator allocator = UnsafeAllocator.create();
 	private boolean ignoreNull;
+	private boolean ignoreMissingFields;
 	
+	
+	public JSONCodec(boolean ignoreNull, boolean ignoreMissingFields) {
+		this.ignoreNull = ignoreNull;
+		this.ignoreMissingFields = ignoreMissingFields;
+	}
 	
 	public JSONCodec(boolean ignoreNull) {
-		this.ignoreNull = ignoreNull;
+		this(ignoreNull, false);
 	}
 	
 	
@@ -136,6 +144,7 @@ public class JSONCodec {
 		Class<? extends Object> type = target.getClass();
 		try {
 			for (Entry<String, Object> e : json.entrySet()) {
+				try {
 					Field field = ReflectionHelper.getDeclaredField(type, e.getKey());
 					if (isIgnoredField(field)) continue;
 					boolean accessible = field.isAccessible();
@@ -146,8 +155,11 @@ public class JSONCodec {
 						field.set(target, _decodeObject(e.getValue(), field.getType()));
 					}
 					field.setAccessible(accessible);
+				} catch (NoSuchFieldException ex) {
+					if (!ignoreMissingFields) throw new JSONCodecException(ex);
+				}
 			}
-		} catch (NoSuchFieldException | IllegalArgumentException | IllegalAccessException | InstantiationException e) {
+		} catch (IllegalArgumentException | IllegalAccessException | InstantiationException e) {
 			throw new JSONCodecException(e);
 		}
 		
