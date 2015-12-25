@@ -215,7 +215,7 @@ public class JSONCodec {
 		}
 		
 		try {
-			json = _encodeObject(o);
+			json = encodeObjectJSON(o);
 			return json.toString();
 		} catch (Exception e) {
 			throw new JSONCodecException(e);
@@ -230,7 +230,7 @@ public class JSONCodec {
 		}
 		
 		try {
-			json = _encodeObject(o);
+			json = encodeObjectJSON(o);
 			byte[] bytes = json.toString().getBytes();
 			out.write(bytes);
 		} catch (Exception e) {
@@ -240,8 +240,9 @@ public class JSONCodec {
 
 	/** returns a JSONObject or JSONArray depending on the given 
 	 * object to be encoded */
-	private Object _encodeObject(Object o) throws JSONCodecException {
+	public Object encodeObjectJSON(Object o) throws JSONCodecException {
 		try {
+			// TODO: needs refactoring: see decodeObject(JSONObject) and decodeObject(String)
 		
 			if (ReflectionHelper.isPrimitive(o.getClass())) {
 				return primitive2json(o);
@@ -274,7 +275,7 @@ public class JSONCodec {
 			if (value == null) {
 				if (!ignoreNull) json.put(field.getName(), null);
 			} else {
-				json.put(field.getName(), _encodeObject(value));
+				json.put(field.getName(), encodeObjectJSON(value));
 			}
 			field.setAccessible(accessible);
 		}
@@ -296,7 +297,7 @@ public class JSONCodec {
 			if (value == null) {
 				if (!ignoreNull) json.add(null);
 			} else {
-				json.add(_encodeObject(value));
+				json.add(encodeObjectJSON(value));
 			}
 		}
 		return json;
