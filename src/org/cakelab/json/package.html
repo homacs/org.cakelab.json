@@ -2,7 +2,7 @@
 <html>
 <body>
 <p>
-Contains a JSON API and a JSON/POJO codec.
+This package contains a JSON API and a JSON/POJO codec.
 </p>
 <p>
 This package provides two ways to deal with JSON documents. A simple API mapping the 
@@ -102,6 +102,8 @@ variables which exist in the JSON document.
 <li>Do not use polymorphism on classes of member attributes.</li>
 <li>The data model has to be hierarchical.</li>
 <li><code>static</code> and <code>transient</code> members will be ignored.</li>
+<li>Do not use <code>enum</code> (not supported yet).</li>
+<li>Do not use nested classes (not supported yet).</li>
 </ul>
 More on those rules and workarounds see Rules and Workarounds section below.
 <p>
@@ -159,7 +161,7 @@ not a member of the object but of the class. That means, there is no point in
 storing them in every object.
 </p>
 
-<h3>Hierarchical Data Model</h3>
+<h3 id="hierarchy">Hierarchical Data Model</h3>
 The codec traverses through your data model by iterating over all members of the given 
 root object and following each reference to other objects until there are no more 
 references. Thus, if there are for example two objects which reference each other,
@@ -220,6 +222,23 @@ polymorphismUser.ref_on_A_or_B = codec.decode(jsonRef_on_A_or_B, memberType);
 </pre>
 
 This is not an ideal solution and I hope I can provide a better one in future.
+
+<h3>Enumaration Classes</h3>
+<code>enum</code>s require to be unique (of course). The codec does not know
+yet about enums, that's why it will literally store enums in the JSON document
+by their values and loads them as such, when decoding. As a result two enums 
+with the same values are now different, because the test on equality compares 
+their memory addresses and not their values. However, a future version of 
+org.cakelab.json will consider this.
+
+<h3>Nested Classes</h3>
+Nested classes are those classes declared inside another class. Nested classes
+have a pointer on their surrounding class, which usually has a pointer on the 
+nested class (that's the reason why you declared this class initially inside 
+the other class). As a result your data model is no longer hierarchical and the
+codec will get stuck in an endless loop as explained above 
+(see <a href="#hierarchy">Hierachical Data Model</a>). Another thing to be 
+considered in a future version of org.cakelab.json.
 
 </body>
 </html>
