@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.charset.Charset;
 import java.util.Map.Entry;
 
 import org.cakelab.json.JSONArray;
@@ -20,15 +21,25 @@ public class JSONCodec {
 	private UnsafeAllocator allocator = UnsafeAllocator.create();
 	private boolean ignoreNull;
 	private boolean ignoreMissingFields;
+	private Charset charset;
 	
 	
-	public JSONCodec(boolean ignoreNull, boolean ignoreMissingFields) {
+	public JSONCodec(Charset charset, boolean ignoreNull, boolean ignoreMissingFields) {
+		this.charset = charset;
 		this.ignoreNull = ignoreNull;
 		this.ignoreMissingFields = ignoreMissingFields;
 	}
 	
+	public JSONCodec(boolean ignoreNull, boolean ignoreMissingFields) {
+		this(Charset.defaultCharset(), ignoreNull, ignoreMissingFields);
+	}
+	
+	public JSONCodec(Charset charset, boolean ignoreNull) {
+		this(charset, ignoreNull, false);
+	}
+	
 	public JSONCodec(boolean ignoreNull) {
-		this(ignoreNull, false);
+		this(Charset.defaultCharset(), ignoreNull, false);
 	}
 	
 	
@@ -56,7 +67,7 @@ public class JSONCodec {
 	public Object decodeObject(InputStream inputStream, Object target) throws JSONCodecException {
 
 		try {
-			Parser parser = new Parser(inputStream);
+			Parser parser = new Parser(inputStream, charset);
 			JSONObject json = parser.parse();
 			
 			return _decodeObject(json, target);
@@ -74,7 +85,7 @@ public class JSONCodec {
 	public Object decodeObject(InputStream inputStream,
 			Class<?> target)  throws JSONCodecException {
 		try {
-			Parser parser = new Parser(inputStream);
+			Parser parser = new Parser(inputStream, charset);
 			JSONObject json = parser.parse();
 			
 			return _decodeObject(json, target);

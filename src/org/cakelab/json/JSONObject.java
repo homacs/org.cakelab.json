@@ -6,7 +6,7 @@ import java.util.Iterator;
 
 public class JSONObject extends HashMap<String, Object>{
 	private static final long serialVersionUID = 1L;
-	
+
 
 	public static void appendValue(JSONPrettyprint sb, Object o) {
 		if (o == null) {
@@ -57,7 +57,7 @@ public class JSONObject extends HashMap<String, Object>{
 			sb.append("\\t");
 			break;
 		default:
-			if (isNonAscii(c)) {
+			if (sb.isUnicodeValues() && isNonAscii(c)) {
 				sb.append("\\u");
 				String s = Integer.toHexString(c);
 				// add missing leading zeros

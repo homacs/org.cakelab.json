@@ -1,7 +1,9 @@
 package org.cakelab.json;
 
-class JSONPrettyprint {
+public class JSONPrettyprint {
 
+	public static final int NON_UNICODE_VALUES = 1;
+	private boolean unicodeValues;
 	private boolean active;
 	private int indent;
 	StringBuffer sb = new StringBuffer();
@@ -10,13 +12,25 @@ class JSONPrettyprint {
 
 	public JSONPrettyprint() {
 		deactivate();
+		this.unicodeValues = true;
+	}
+
+	public JSONPrettyprint(boolean active, int flags) {
+		this();
+		if (active) activate();
+		if ((flags & NON_UNICODE_VALUES) > 0) {
+			this.unicodeValues = false;
+		}
 	}
 
 	public JSONPrettyprint(boolean active) {
-		this();
-		if (active) activate();
+		this(active, 0);
 	}
 
+	public boolean isUnicodeValues() {
+		return unicodeValues;
+	}
+	
 	public boolean isActive() {
 		return active;
 	}
