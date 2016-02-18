@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.nio.charset.Charset;
 
 public class Scanner {
 	private Reader reader;
@@ -30,8 +31,12 @@ public class Scanner {
 		readCharacter();
 	}
 	
+	public Scanner(InputStream in, Charset charset) throws IOException {
+		this(new InputStreamReader(in, charset));
+	}
+	
 	public Scanner (InputStream in) throws IOException {
-		this(new InputStreamReader(in));
+		this(in, Charset.defaultCharset());
 		
 	}
 	

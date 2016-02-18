@@ -2,6 +2,7 @@ package org.cakelab.json;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 public class Parser {
 	Scanner scanner;
@@ -18,13 +19,21 @@ public class Parser {
 		this(jsonString, false);
 	}
 
-	public Parser(InputStream jsonString, boolean ignoreNull) throws IOException {
+	public Parser(InputStream in, Charset charset, boolean ignoreNull) throws IOException {
 		this.ignoreNull = ignoreNull;
-		scanner = new Scanner(jsonString);
+		scanner = new Scanner(in, charset);
 	}
 
-	public Parser(InputStream jsonString) throws IOException {
-		this(jsonString, false);
+	public Parser(InputStream in, boolean ignoreNull) throws IOException {
+		this(in, Charset.defaultCharset(), ignoreNull);
+	}
+
+	public Parser(InputStream in, Charset charset) throws IOException {
+		this(in, charset, false);
+	}
+
+	public Parser(InputStream in) throws IOException {
+		this(in, Charset.defaultCharset(), false);
 	}
 
 	public JSONObject parse() throws IOException, JSONException {
