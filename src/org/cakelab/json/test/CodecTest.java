@@ -10,7 +10,7 @@ public class CodecTest {
 	public static void main(String[] args) throws JSONCodecException {
 		TestString ts = new TestString();
 		
-		ts.setS("Ümläutß");
+		ts.setS("-XX:ParallelGCThreads\u003d8");
 
 		
 		JSONCodec codec = new JSONCodec(false);

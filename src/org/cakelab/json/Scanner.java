@@ -235,30 +235,23 @@ public class Scanner {
 	}
 
 	private char readUnicodeControlSequence() throws IOException, JSONException {
-		int hex = readHexDigits();
+		int hex = readHexDigits(4);
 
 		// casting unicode value to char is said to be the right conversion
 		return (char)hex;
 	}
 
-	private int readHexDigits() throws IOException, JSONException {
-		char c = readCharacterSkipWhitespace();
+	private int readHexDigits(int amount) throws IOException, JSONException {
 		int radix = 16;
-		if (Token.isHexDigit(c)) {
-			int hex = 0;
-			hex += Character.digit(c, radix);
+		int hex = 0;
+		for (int i = 0; i < amount; i++) {
+			if (!Token.isHexDigit((char)lookahead)) error("Unexpected character in unicode control sequence");
 			
-			while (Token.isHexDigit((char)lookahead)) {
-				c = readCharacter();
-				hex *= radix;
-				hex += Character.digit(c, radix);
-			}
-			return hex;
+			char c = readCharacter();
+			hex *= radix;
+			hex += Character.digit(c, radix);
 		}
-		
-		error("Unexpected character in unicode control sequence");
-		
-		return 0;
+		return hex;
 	}
 	
 	private void newline() {
