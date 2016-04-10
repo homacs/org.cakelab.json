@@ -1,6 +1,7 @@
 package org.cakelab.json.codec.test;
 
 import org.cakelab.json.codec.JSONCodec;
+import org.cakelab.json.codec.JSONCodecConfiguration;
 import org.cakelab.json.codec.JSONCodecException;
 
 public class Test {
@@ -45,7 +46,7 @@ public class Test {
 	}
 	
 	
-	static JSONCodec codec = new JSONCodec(true);
+	static JSONCodec codec = new JSONCodec(new JSONCodecConfiguration(true));
 	
 	
 	public static void main (String[] args) {
