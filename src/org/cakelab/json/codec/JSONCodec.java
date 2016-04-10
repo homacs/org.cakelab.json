@@ -19,25 +19,40 @@ public class JSONCodec {
 	
 	
 	private UnsafeAllocator allocator = UnsafeAllocator.create();
-	private boolean ignoreNull;
-	private boolean ignoreMissingFields;
-	private Charset charset;
+	private JSONCodecConfiguration cfg;
 	
 	
-	public JSONCodec(Charset charset, boolean ignoreNull, boolean ignoreMissingFields) {
-		this.charset = charset;
-		this.ignoreNull = ignoreNull;
-		this.ignoreMissingFields = ignoreMissingFields;
+	public JSONCodec(JSONCodecConfiguration config) {
+		this.cfg = config;
 	}
 	
+	/**
+	 * @deprecated use {@link JSONCodec#JSONCodec(JSONCodecConfiguration)} instead.
+	 */
+	public JSONCodec(Charset charset, boolean ignoreNull, boolean ignoreMissingFields) {
+		cfg = new JSONCodecConfiguration();
+		cfg.charset = charset;
+		cfg.ignoreNull = ignoreNull;
+		cfg.ignoreMissingFields = ignoreMissingFields;
+	}
+	
+	/**
+	 * @deprecated use {@link JSONCodec#JSONCodec(JSONCodecConfiguration)} instead.
+	 */
 	public JSONCodec(boolean ignoreNull, boolean ignoreMissingFields) {
 		this(Charset.defaultCharset(), ignoreNull, ignoreMissingFields);
 	}
 	
+	/**
+	 * @deprecated use {@link JSONCodec#JSONCodec(JSONCodecConfiguration)} instead.
+	 */
 	public JSONCodec(Charset charset, boolean ignoreNull) {
 		this(charset, ignoreNull, false);
 	}
 	
+	/**
+	 * @deprecated use {@link JSONCodec#JSONCodec(JSONCodecConfiguration)} instead.
+	 */
 	public JSONCodec(boolean ignoreNull) {
 		this(Charset.defaultCharset(), ignoreNull, false);
 	}
@@ -67,7 +82,7 @@ public class JSONCodec {
 	public Object decodeObject(InputStream inputStream, Object target) throws JSONCodecException {
 
 		try {
-			Parser parser = new Parser(inputStream, charset);
+			Parser parser = new Parser(inputStream, cfg.charset);
 			JSONObject json = parser.parse();
 			
 			return _decodeObject(json, target);
@@ -85,7 +100,7 @@ public class JSONCodec {
 	public Object decodeObject(InputStream inputStream,
 			Class<?> target)  throws JSONCodecException {
 		try {
-			Parser parser = new Parser(inputStream, charset);
+			Parser parser = new Parser(inputStream, cfg.charset);
 			JSONObject json = parser.parse();
 			
 			return _decodeObject(json, target);
@@ -104,7 +119,7 @@ public class JSONCodec {
 	public Object decodeObject(String jsonString, Class<?> type) throws JSONCodecException {
 
 		try {
-			Parser parser = new Parser(jsonString, ignoreNull);
+			Parser parser = new Parser(jsonString, cfg.ignoreNull);
 			JSONObject json = parser.parse();
 			
 			return _decodeObject(json, type);
@@ -141,6 +156,17 @@ public class JSONCodec {
 	private Object _decodeObject(Object json, Class<?> type) throws JSONCodecException, InstantiationException {
 		if (json == null) return null;
 		if (json instanceof JSONObject) {
+			if (cfg.considerClassAttribute) {
+				String clazz = ((JSONObject) json).getString("class");
+				if (clazz != null) {
+					try {
+						Class<?> derived = JSONCodec.class.getClassLoader().loadClass(clazz);
+						if (!ReflectionHelper.isSubclassOf(derived, type)) throw new JSONCodecException("class " + clazz + " is not a subclass of " + type.getSimpleName());
+					} catch (ClassNotFoundException e) {
+						throw new JSONCodecException(e);
+					}
+				}
+			}
 			return json2object((JSONObject) json, allocator.newInstance(type));
 		} else if (json instanceof JSONArray) {
 			return json2array((JSONArray) json, Array.newInstance(type.getComponentType(), ((JSONArray) json).size()));
@@ -167,7 +193,7 @@ public class JSONCodec {
 					}
 					field.setAccessible(accessible);
 				} catch (NoSuchFieldException ex) {
-					if (!ignoreMissingFields) throw new JSONCodecException(ex);
+					if (!cfg.ignoreMissingFields) throw new JSONCodecException(ex);
 				}
 			}
 		} catch (IllegalArgumentException | IllegalAccessException | InstantiationException e) {
@@ -284,7 +310,7 @@ public class JSONCodec {
 			field.setAccessible(true);
 			Object value = field.get(o);
 			if (value == null) {
-				if (!ignoreNull) json.put(field.getName(), null);
+				if (!cfg.ignoreNull) json.put(field.getName(), null);
 			} else {
 				json.put(field.getName(), encodeObjectJSON(value));
 			}
@@ -293,32 +319,23 @@ public class JSONCodec {
 		return json;
 	}
 
-	private boolean isIgnoredField(Field field) {
-		int mod = field.getModifiers();
-
-		return Modifier.isTransient(mod) || Modifier.isStatic(mod) || Modifier.isNative(mod);
-	}
-
-
-
 	private JSONArray array2json(Object o) throws ArrayIndexOutOfBoundsException, IllegalArgumentException, IOException, JSONException, JSONCodecException {
 		JSONArray json = new JSONArray();
 		for (int i = 0; i < Array.getLength(o); i++) {
 			Object value = Array.get(o, i);
 			if (value == null) {
-				if (!ignoreNull) json.add(null);
+				if (!cfg.ignoreNull) json.add(null);
 			} else {
 				json.add(encodeObjectJSON(value));
 			}
 		}
 		return json;
 	}
+	
+	private boolean isIgnoredField(Field field) {
+		int mod = field.getModifiers();
 
-
-
-
-
-
-
+		return Modifier.isTransient(mod) || Modifier.isStatic(mod) || Modifier.isNative(mod);
+	}
 
 }

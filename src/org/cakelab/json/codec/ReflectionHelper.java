@@ -2,18 +2,11 @@ package org.cakelab.json.codec;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
 public class ReflectionHelper {
-
-	private static final String METHOD_PREFIX_SETTER = "set";
-	private static final String METHOD_PREFIX_GETTER = "get";
-	private static final String METHOD_PREFIX_ARRAY_SETTER = "aSet";
-	private static final String METHOD_PREFIX_ARRAY_GETTER = "aGet";
-	private static final String METHOD_PREFIX_ARRAY_ADDER = "aAdd";
 
 	private static HashMap<Class<?>, Vector<Field>> fieldLists = new HashMap<Class<?>, Vector<Field>> ();
 	private static HashMap<Class<?>, HashMap<String, Field>> fieldMaps = new HashMap<Class<?>, HashMap<String, Field>> ();
@@ -78,54 +71,6 @@ public class ReflectionHelper {
 	}
 
 
-	public static Method findSetter(Object target, Field f) throws JSONCodecException {
-		return findSetter(target.getClass(), f);
-	}
-
-	public static Method findSetter(Class<?> target, Field f) throws JSONCodecException {
-		String methodName = METHOD_PREFIX_SETTER + xetterName(f.getName());
-		return findMethod(target, methodName, new Class<?>[]{f.getType()});
-	}
-
-	public static Method findGetter(Object target, Field f) throws JSONCodecException {
-		return findGetter(target.getClass(), f);
-	}
-
-	public static Method findGetter(Class<?> target, Field f) throws JSONCodecException {
-		String methodName = METHOD_PREFIX_GETTER + xetterName(f.getName());
-		return findMethod(target, methodName, new Class<?>[]{});
-	}
-
-
-	public static Method findASetter(Object target, Field f) throws JSONCodecException {
-		return findASetter(target.getClass(), f);
-	}
-
-	public static Method findASetter(Class<?> target, Field f) throws JSONCodecException {
-		String methodName = METHOD_PREFIX_ARRAY_SETTER + xetterName(f.getName());
-		return findMethod(target, methodName, new Class<?>[]{int.class, f.getType().getComponentType()});
-	}
-
-	public static Method findAGetter(Object target, Field f) throws JSONCodecException {
-		return findAGetter(target.getClass(), f);
-	}
-
-	public static Method findAGetter(Class<?> target, Field f) throws JSONCodecException {
-		String methodName = METHOD_PREFIX_ARRAY_GETTER + xetterName(f.getName());
-		return findMethod(target, methodName, new Class<?>[]{int.class});
-	}
-
-	public static Method findAAdder(Object target, Field field) throws JSONCodecException {
-		Method m = findAAdder(target.getClass(), field);
-		return m;
-	}
-
-	public static Method findAAdder(Class<?> target, Field field) throws JSONCodecException {
-		String methodName = METHOD_PREFIX_ARRAY_ADDER + xetterName(field.getName());
-		Method m = findMethod(target, methodName, new Class<?>[]{field.getType().getComponentType()});
-		return m;
-	}
-
 	public static void checkParameter(Method method, int param, Field field, Class<?> paramType) throws JSONCodecException {
 		Class<?>[] params = method.getParameterTypes();
 		if (params.length < param+1) {
@@ -137,13 +82,13 @@ public class ReflectionHelper {
 	}
 
 
-	private static Method findMethod(Class<?> target, String methodName, Class<?>[] params) throws JSONCodecException {
+	public static Method findMethod(Class<?> target, String methodName, Class<?>[] params) throws JSONCodecException {
 		Method method = null;
 		try {
-			/* try direct access with parameter type */
+			/* try direct access to public methods with parameter types */
 			return target.getMethod(methodName, params);
 		} catch (Exception e) {
-			/* search manually */
+			/* search all methods manually */
 			for (Method m : target.getDeclaredMethods()) {
 				if (m.getName().equals(methodName)) {
 					method = m;
@@ -153,24 +98,22 @@ public class ReflectionHelper {
 		}
 		if (method == null) {
 			throw new JSONCodecException(target.getName() + '.' + methodName + "(): not found");
-		} else if (!Modifier.isPublic(method.getModifiers())) {
-			throw new JSONCodecException(target.getName() + '.' + methodName + "(): not public");
 		}
 		return method;
 	}
 
-
-
-	public static String xetterName(String name) {
-		return name.substring(0, 1).toUpperCase() + name.substring(1);
-	}
-
-
-	public static void checkGetterReturnType(Method m, Class<?> class1) throws JSONCodecException {
-		Class<?> t = m.getReturnType();
-		if (!t.equals(class1)) {
-			throw new JSONCodecException(m.getDeclaringClass() + "." + m.getName() + "(): return must have type " + class1.getSimpleName());
+	public static boolean isSubclassOf(Class<?> derived, Class<?> superclass) {
+		if (derived.equals(superclass)) return true;
+		
+		if (derived.equals(Object.class)) return false;
+		
+		for (Class<?> interf : derived.getInterfaces()) {
+			if (isSubclassOf(interf, superclass)) {
+				return true;
+			}
 		}
+		
+		return isSubclassOf(derived.getSuperclass(), superclass);
 	}
 
 
