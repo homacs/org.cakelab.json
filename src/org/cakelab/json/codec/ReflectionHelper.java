@@ -28,7 +28,7 @@ public class ReflectionHelper {
 		return fields;
 	}
 
-	public static	HashMap<String, Field> getDeclaredFieldsMap(Class<?> type) {
+	public static HashMap<String, Field> getDeclaredFieldsMap(Class<?> type) {
 		HashMap<String, Field> map = fieldMaps.get(type);
 		if (map == null) {
 			map = new HashMap<String, Field>();
