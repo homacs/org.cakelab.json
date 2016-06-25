@@ -162,6 +162,7 @@ public class JSONCodec {
 					try {
 						Class<?> derived = JSONCodec.class.getClassLoader().loadClass(clazz);
 						if (!ReflectionHelper.isSubclassOf(derived, type)) throw new JSONCodecException("class " + clazz + " is not a subclass of " + type.getSimpleName());
+						else type = derived;
 					} catch (ClassNotFoundException e) {
 						throw new JSONCodecException(e);
 					}
@@ -182,6 +183,8 @@ public class JSONCodec {
 		try {
 			for (Entry<String, Object> e : json.entrySet()) {
 				try {
+					if (cfg.considerClassAttribute && e.getKey().equals("class")) continue;
+					
 					Field field = ReflectionHelper.getDeclaredField(type, e.getKey());
 					if (isIgnoredField(field)) continue;
 					boolean accessible = field.isAccessible();
@@ -252,7 +255,7 @@ public class JSONCodec {
 		}
 		
 		try {
-			json = encodeObjectJSON(o);
+			json = encodeObjectJSON(o, null);
 			return json.toString();
 		} catch (Exception e) {
 			throw new JSONCodecException(e);
@@ -267,7 +270,7 @@ public class JSONCodec {
 		}
 		
 		try {
-			json = encodeObjectJSON(o);
+			json = encodeObjectJSON(o, null);
 			byte[] bytes = json.toString().getBytes();
 			out.write(bytes);
 		} catch (Exception e) {
@@ -276,8 +279,9 @@ public class JSONCodec {
 	}
 
 	/** returns a JSONObject or JSONArray depending on the given 
-	 * object to be encoded */
-	public Object encodeObjectJSON(Object o) throws JSONCodecException {
+	 * object to be encoded 
+	 * @param referenceType */
+	public Object encodeObjectJSON(Object o, Class<?> referenceType) throws JSONCodecException {
 		try {
 			// TODO: needs refactoring: see decodeObject(JSONObject) and decodeObject(String)
 		
@@ -286,7 +290,7 @@ public class JSONCodec {
 			} else if (o.getClass().isArray()) {
 				return array2json(o);
 			} else {
-				return object2json(o);
+				return object2json(o, referenceType);
 			}
 		} catch (JSONCodecException e) {
 			throw e;
@@ -299,7 +303,7 @@ public class JSONCodec {
 		return o;
 	}
 
-	private JSONObject object2json(Object o) throws JSONCodecException, IllegalArgumentException, IllegalAccessException {
+	private JSONObject object2json(Object o, Class<?> referenceType) throws JSONCodecException, IllegalArgumentException, IllegalAccessException {
 		JSONObject json = new JSONObject();
 		Class<?> type = o.getClass();
 		for (Field field : ReflectionHelper.getDeclaredFields(type)) {
@@ -312,9 +316,12 @@ public class JSONCodec {
 			if (value == null) {
 				if (!cfg.ignoreNull) json.put(field.getName(), null);
 			} else {
-				json.put(field.getName(), encodeObjectJSON(value));
+				json.put(field.getName(), encodeObjectJSON(value, field.getType()));
 			}
 			field.setAccessible(accessible);
+		}
+		if (referenceType != null && referenceType != type) {
+			json.put("class", type.getName());
 		}
 		return json;
 	}
@@ -326,7 +333,7 @@ public class JSONCodec {
 			if (value == null) {
 				if (!cfg.ignoreNull) json.add(null);
 			} else {
-				json.add(encodeObjectJSON(value));
+				json.add(encodeObjectJSON(value, o.getClass().getComponentType()));
 			}
 		}
 		return json;

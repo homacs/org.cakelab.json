@@ -177,7 +177,7 @@ class B {
 }
 </pre>
 
-<h3>Polymorphism</h3>
+<h3>Polymorphism and the Special Attribute <code>class</code></h3>
 For those who don't know: You apply polymorphism if you have multiple classes derived
 from a common super class or interface and you use the type of the super class or 
 interface to reference the objects of the subclasses (see example below).
@@ -196,32 +196,48 @@ class PolymorphismUser {
 }
 </pre>
 
+<p>
+JSON does not know anything about classes and is not type save. Thus, the parser 
+requires additional information to determine the actual type of an object if it 
+does not match with the type of the variable which will receive the reference.
+</p>
+<p>
+Since Java has built-in runtime type information on each object stored in a global
+variable for each class which is called "<code>class</code>", this attribute name 
+is implicitly reserved and can be used for this purpose if required.
+</p>
+<p>
+For this purpose, you can configure the JSONCodec to use the <code>class</code> attribute. 
+Refer to class <code>JSONCodecConfiguration</code> to do so.
+</p>
+<p>
+When enabled, the codec will compare the type of a reference and the type of 
+a referenced object and in case of differences (inheritance) it will 
+automatically add a attribute <code>class</code> which holds the name of the class when encoding. 
+When decoding, the codec will in turn search for a attribute <code>class</code> and use the type
+information to instantiate the proper object.
+</p>
 
-JSON does not know anything about classes and is not type save. Thus, there is no
-generic way to resolve it because the only information the codec gets if it traverses
-your data model is that the referenced object of member <code>ref_on_A_or_B</code> 
-is of type MySuperClass. So, you either prevent those cases or you manually guide the
-codec to decode into the right type, which is explained in the workaround below.
-
-<em>Workaround</em>
-The workaround starts with decoding the input stream or string into a JSONObject.
-On each member you can now specifically call the codec and provide the type you
-expect. So, in case you have stored the type of the object inside the json document
-for example in a member called "class" than you can do the following:
 
 <pre>
-Parser jsonParser = new Parser(inputStream);
-JSONObject jsonPolymorphismUser = jsonParser.parse();
-JSONObject jsonRef_on_A_or_B = (JSONObject)jsonPolymorphismUser.get("ref_on_A_or_B");
-
-PolymorphismUser polymorphismUser = new PolymorphismUser();
-Class memberType = Class.forName(jsonRef_on_A_or_B.getString("class"));
-JSONCodec codec = new JSONCodec(true);
-
-polymorphismUser.ref_on_A_or_B = codec.decode(jsonRef_on_A_or_B, memberType);
+			/* given an object with reference on A while reference is of type SuperClass */
+			PolymorphismUser object = new PolymorphismUser();
+			object.ref_on_A_or_B = new A();
+	
+			/* configure and instantiate a codec which supports the "class" attribute. */
+			JSONCodecConfiguration cfg = new JSONCodecConfiguration();
+			cfg.considerClassAttribute = true;
+			JSONCodec codec = new JSONCodec(cfg);
+	
+			/* encode object into a json string */
+			String json = codec.encodeObject(object);
+	
+			/* and decode it again using a codec with the same configuration */
+			PolymorphismUser o2 = (PolymorphismUser) codec.decodeObject(json, PolymorphismUser.class);
+	
+			/* member o2.ref_on_A_or_B is of type A again. */
+			assert object.ref_on_A_or_B.getClass().equals(o2.ref_on_A_or_B.getClass());		
 </pre>
-
-This is not an ideal solution and I hope I can provide a better one in future.
 
 <h3>Enumaration Classes</h3>
 <code>enum</code>s require to be unique (of course). The codec does not know

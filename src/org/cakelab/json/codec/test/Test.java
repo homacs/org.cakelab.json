@@ -53,6 +53,36 @@ public class Test {
 		testPrimitives();
 		testObjectInObject();
 		testArrayMembers();
+		testPolymorphism();
+	}
+
+
+
+
+	private static void testPolymorphism() {
+		try {
+			/* given an object with reference on A while reference is of type SuperClass */
+			PolymorphismUser object = new PolymorphismUser();
+			object.ref_on_A_or_B = new A();
+	
+			/* configure and instantiate a codec which supports the "class" attribute. */
+			JSONCodecConfiguration cfg = new JSONCodecConfiguration();
+			cfg.considerClassAttribute = true;
+			JSONCodec codec = new JSONCodec(cfg);
+	
+			/* encode object into a json string */
+			String json = codec.encodeObject(object);
+	
+			/* and decode it again using a codec with the same configuration */
+			PolymorphismUser o2 = (PolymorphismUser) codec.decodeObject(json, PolymorphismUser.class);
+	
+			/* member o2.ref_on_A_or_B is of type A again. */
+			if (!object.ref_on_A_or_B.getClass().equals(o2.ref_on_A_or_B.getClass())) {
+				error("testPolymorphism");
+			}
+		} catch (JSONCodecException e) {
+			e.printStackTrace();
+		}
 	}
 
 
