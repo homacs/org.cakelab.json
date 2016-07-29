@@ -99,11 +99,11 @@ variables which exist in the JSON document.
 <p>
 <b><em>Important Rules:</em></b>
 <ul>
-<li>Do not use polymorphism on classes of member attributes.</li>
 <li>The data model has to be hierarchical.</li>
 <li><code>static</code> and <code>transient</code> members will be ignored.</li>
 <li>Do not use <code>enum</code> (not supported yet).</li>
 <li>Do not use nested classes (not supported yet).</li>
+<li>If you are using polymorphism on classes of member attributes you have to configure the codec specially (see Section on polymorphism below).</li>
 </ul>
 More on those rules and workarounds see Rules and Workarounds section below.
 <p>
@@ -213,30 +213,30 @@ Refer to class <code>JSONCodecConfiguration</code> to do so.
 <p>
 When enabled, the codec will compare the type of a reference and the type of 
 a referenced object and in case of differences (inheritance) it will 
-automatically add a attribute <code>class</code> which holds the name of the class when encoding. 
-When decoding, the codec will in turn search for a attribute <code>class</code> and use the type
+automatically add an attribute <code>class</code> which holds the name of the class, when encoding. 
+When decoding, the codec will in turn search for an attribute <code>class</code> and use the type
 information to instantiate the proper object.
 </p>
 
 
 <pre>
-			/* given an object with reference on A while reference is of type SuperClass */
-			PolymorphismUser object = new PolymorphismUser();
-			object.ref_on_A_or_B = new A();
+/* given an object with reference on A while reference is of type SuperClass */
+PolymorphismUser object = new PolymorphismUser();
+object.ref_on_A_or_B = new A();
 	
-			/* configure and instantiate a codec which supports the "class" attribute. */
-			JSONCodecConfiguration cfg = new JSONCodecConfiguration();
-			cfg.considerClassAttribute = true;
-			JSONCodec codec = new JSONCodec(cfg);
+/* configure and instantiate a codec which supports the "class" attribute. */
+JSONCodecConfiguration cfg = new JSONCodecConfiguration();
+cfg.considerClassAttribute = true;
+JSONCodec codec = new JSONCodec(cfg);
 	
-			/* encode object into a json string */
-			String json = codec.encodeObject(object);
+/* encode object into a json string */
+String json = codec.encodeObject(object);
 	
-			/* and decode it again using a codec with the same configuration */
-			PolymorphismUser o2 = (PolymorphismUser) codec.decodeObject(json, PolymorphismUser.class);
+/* and decode it again using a codec with the same configuration */
+PolymorphismUser o2 = (PolymorphismUser) codec.decodeObject(json, PolymorphismUser.class);
 	
-			/* member o2.ref_on_A_or_B is of type A again. */
-			assert object.ref_on_A_or_B.getClass().equals(o2.ref_on_A_or_B.getClass());		
+/* member o2.ref_on_A_or_B is of type A again. */
+assert object.ref_on_A_or_B.getClass().equals(o2.ref_on_A_or_B.getClass());		
 </pre>
 
 <h3>Enumaration Classes</h3>
