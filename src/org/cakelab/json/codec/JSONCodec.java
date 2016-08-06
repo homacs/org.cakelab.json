@@ -279,8 +279,9 @@ public class JSONCodec {
 	}
 
 	/** returns a JSONObject or JSONArray depending on the given 
-	 * object to be encoded 
-	 * @param referenceType */
+	 * object o to be encoded.
+	 * @param o Object to be encoded.
+	 * @param referenceType Class of the object or some subclass, in case you want just a particular subset of the members */
 	public Object encodeObjectJSON(Object o, Class<?> referenceType) throws JSONCodecException {
 		try {
 			// TODO: needs refactoring: see decodeObject(JSONObject) and decodeObject(String)
@@ -299,6 +300,17 @@ public class JSONCodec {
 		}
 	}
 
+	/** Encodes the given object into a JSONObject or JSONArray, depending on the given 
+	 * object.
+	 * @param o
+	 * @return
+	 * @throws JSONCodecException 
+	 */
+	public Object encodeObjectJSON(Object o) throws JSONCodecException {
+		return encodeObjectJSON(o, o.getClass());
+	}
+
+	
 	private Object primitive2json(Object o) {
 		return o;
 	}
