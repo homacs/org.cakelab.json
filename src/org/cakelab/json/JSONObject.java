@@ -1,92 +1,47 @@
 package org.cakelab.json;
 
-import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class JSONObject extends HashMap<String, Object>{
+import org.cakelab.json.codec.JSONCodec;
+import org.cakelab.json.codec.JSONStringFormatter;
+
+public class JSONObject extends HashMap<String, Object> implements JSONCompoundType {
 	private static final long serialVersionUID = 1L;
 
 
-	public static void appendValue(JSONPrettyprint sb, Object o) {
+	public static void appendValue(JSONStringFormatter s, Object o) {
 		if (o == null) {
-			sb.append("null");
+			s.append("null");
 		} else if (o instanceof String) {
-			sb.append('\"');
-			StringReader reader = new StringReader(o.toString());
-			int read;
-			try {
-				while ((read = reader.read()) > 0) {
-					if (Character.isSupplementaryCodePoint(read)) throw new Error("Supplimentary code points (extended unicode) are not supported by JSON");
-					appendCharacter(sb, (char)read);
-				}
-			} catch (Throwable e) {
-				throw new Error(e);
-			}
-			sb.append('\"');
+			s.append('\"');
+			
+			s.appendUnicodeString((String)o);
+			
+			s.append('\"');
 		} else if (o instanceof JSONArray) {
-			((JSONArray)o).toString(sb);
+			((JSONArray)o).toString(s);
 		} else if (o instanceof JSONObject) {
-			((JSONObject)o).toString(sb);
+			((JSONObject)o).toString(s);
 		} else {
-			sb.append(o);
+			s.append(o);
 		}
 	}
 	
-	private static void appendCharacter(JSONPrettyprint sb, char c) {
-		switch (c) {
-		case '\"':
-			sb.append("\\\"");
-			break;
-		case '\\':
-			sb.append("\\\\");
-			break;
-		case '\b':
-			sb.append("\\b");
-			break;
-		case '\f':
-			sb.append("\\f");
-			break;
-		case '\n':
-			sb.append("\\n");
-			break;
-		case '\r':
-			sb.append("\\r");
-			break;
-		case '\t':
-			sb.append("\\t");
-			break;
-		default:
-			if (sb.isUnicodeValues() && isNonAscii(c)) {
-				sb.append("\\u");
-				String s = Integer.toHexString(c);
-				// add missing leading zeros
-				for (int i = s.length(); i < 4 ; i++) sb.append('0');
-				sb.append(s);
-			} else {
-				sb.append(c);
-			}
-			break;
-		}
-	}
-
-	private static boolean isNonAscii(char c) {
-		return c > 127;
-	}
-
-
 	
 	@Override
 	public String toString() {
-		return toString(new JSONPrettyprint(true));
+		return toString(JSONCodec.getDefaultStringFormatter());
 	}
 	
 	
-	public String toString(JSONPrettyprint s) {
+	public String toString(JSONStringFormatter s) {
 		s.append("{");
 		s.indentInc();
 		s.appendNewLine();
-		Iterator<java.util.Map.Entry<String, Object>> it = entrySet().iterator();
+		
+		Iterator<java.util.Map.Entry<String, Object>> it = s.iterator(entrySet());
+		
 		if (it.hasNext()) {
 			s.appendIndent();
 			java.util.Map.Entry<String, Object> e = it.next();

@@ -1,4 +1,4 @@
-package org.cakelab.json;
+package org.cakelab.json.codec;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.Charset;
+
+import org.cakelab.json.JSONException;
 
 public class Scanner {
 	private Reader reader;

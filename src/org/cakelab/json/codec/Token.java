@@ -1,4 +1,4 @@
-package org.cakelab.json;
+package org.cakelab.json.codec;
 
 public class Token {
 	static final int TYPE_LEFTBRACE = '{';

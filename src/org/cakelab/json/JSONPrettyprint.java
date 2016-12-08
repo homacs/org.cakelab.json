@@ -1,25 +1,55 @@
 package org.cakelab.json;
 
-public class JSONPrettyprint {
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Set;
 
-	public static final int NON_UNICODE_VALUES = 1;
-	private boolean unicodeValues;
+import org.cakelab.json.codec.JSONStringFormatter;
+import org.cakelab.json.codec.JSONStringFormatterConfiguration;
+
+public class JSONPrettyprint implements JSONStringFormatter {
+
+	public static final int NON_UNICODE_VALUES = 1<<0;
+	public static final int SORT_MEMBERS = 1<<1;
+
+	private JSONStringFormatterConfiguration cfg;
+
 	private boolean active;
 	private int indent;
-	StringBuffer sb = new StringBuffer();
-	String indentStr = "  ";
-	String currentIndentStr = "";
+	private StringBuffer sb = new StringBuffer();
+	private String indentStr = "  ";
+	private String currentIndentStr = "";
 
+	
+	public JSONPrettyprint(JSONStringFormatterConfiguration format) {
+		this();
+		this.active = format.indenting || format.sortMembers || format.unicodeValues;
+		this.cfg = format;
+	}
+	
 	public JSONPrettyprint() {
 		deactivate();
-		this.unicodeValues = true;
+		this.cfg = new JSONStringFormatterConfiguration();
 	}
 
+	/**
+	 * This constructor is deprecated.
+	 * @deprecated
+	 * @param active
+	 * @param flags
+	 */
 	public JSONPrettyprint(boolean active, int flags) {
 		this();
 		if (active) activate();
 		if ((flags & NON_UNICODE_VALUES) > 0) {
-			this.unicodeValues = false;
+			this.cfg.unicodeValues = false;
+		}
+		if ((flags & SORT_MEMBERS) > 0) {
+			this.cfg.sortMembers = true;
 		}
 	}
 
@@ -27,8 +57,18 @@ public class JSONPrettyprint {
 		this(active, 0);
 	}
 
+	public JSONPrettyprint(JSONPrettyprint formatter) {
+		this();
+		this.active = formatter.active;
+		this.cfg = formatter.cfg;
+	}
+
 	public boolean isUnicodeValues() {
-		return unicodeValues;
+		return cfg.unicodeValues;
+	}
+	
+	public boolean isSortMembers() {
+		return cfg.sortMembers;
 	}
 	
 	public boolean isActive() {
@@ -272,6 +312,84 @@ public class JSONPrettyprint {
 	public String toString() {
 		return sb.toString();
 	}
+
+	@Override
+	public Iterator<Entry<String, Object>> iterator(Set<Entry<String, Object>> entrySet) {
+		if (this.cfg.sortMembers) {
+			ArrayList<java.util.Map.Entry<String, Object>> entries = new ArrayList<java.util.Map.Entry<String, Object>>(entrySet);
+			Collections.sort(entries, new Comparator<java.util.Map.Entry<String, Object>> (){
+
+				@Override
+				public int compare(java.util.Map.Entry<String, Object> o1, java.util.Map.Entry<String, Object> o2) {
+					return String.CASE_INSENSITIVE_ORDER.compare(o1.getKey(), o2.getKey());
+				}});
+			return entries.iterator();
+		} else {
+			return entrySet.iterator();
+		}
+	}
+
+	@Override
+	public void appendUnicodeString(String o) {
+		StringReader reader = new StringReader(o.toString());
+		int read;
+		try {
+			while ((read = reader.read()) > 0) {
+				if (Character.isSupplementaryCodePoint(read)) throw new Error("Supplimentary code points (extended unicode) are not supported by JSON");
+				appendUnicodeCharacter((char)read);
+			}
+		} catch (Throwable e) {
+			throw new Error(e);
+		}
+	}
+
+
+	protected void appendUnicodeCharacter(char c) {
+		switch (c) {
+		case '\"':
+			append("\\\"");
+			break;
+		case '\\':
+			append("\\\\");
+			break;
+		case '\b':
+			append("\\b");
+			break;
+		case '\f':
+			append("\\f");
+			break;
+		case '\n':
+			append("\\n");
+			break;
+		case '\r':
+			append("\\r");
+			break;
+		case '\t':
+			append("\\t");
+			break;
+		default:
+			if (this.cfg.unicodeValues && isNonAscii(c)) {
+				append("\\u");
+				String s = Integer.toHexString(c);
+				// add missing leading zeros
+				for (int i = s.length(); i < 4 ; i++) append('0');
+				append(s);
+			} else {
+				append(c);
+			}
+			break;
+		}
+	}
+
+	private static boolean isNonAscii(char c) {
+		return c > 127;
+	}
+
+	@Override
+	public JSONStringFormatter create(JSONStringFormatterConfiguration config) {
+		return new JSONPrettyprint(config);
+	}
+
 
 	
 }

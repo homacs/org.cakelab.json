@@ -10,18 +10,55 @@ import java.nio.charset.Charset;
 import java.util.Map.Entry;
 
 import org.cakelab.json.JSONArray;
+import org.cakelab.json.JSONCompoundType;
 import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
-import org.cakelab.json.Parser;
+import org.cakelab.json.JSONPrettyprint;
 
 public class JSONCodec {
 	// TODO: needs enum support
+	
+	private static JSONCodecConfiguration defaultConfig;
+	private static JSONStringFormatter formatterFactory = new JSONPrettyprint();
+
+	static {
+		setDefaultConfiguration(new JSONCodecConfiguration());
+	}
 	
 	
 	private UnsafeAllocator allocator = UnsafeAllocator.create();
 	private JSONCodecConfiguration cfg;
 	
-	
+	/** This method allows to change the default behaviour of JSONCodecs.
+	 * @param config The new default configuration to be used by all subsequently created JSONCodec instances.
+	 */
+	public static void setDefaultConfiguration(JSONCodecConfiguration config) {
+		defaultConfig = config;
+	}
+
+	/** 
+	 * Returns a string formatter with the default configuration used to encode 
+	 * Java objects to JSON. The configuration of the default formatter is 
+	 * influenced by the globally set default configuration.
+	 * @return
+	 */
+	public static JSONStringFormatter getDefaultStringFormatter() {
+		return formatterFactory.create(defaultConfig.format);
+	}
+
+
+	/**
+	 * Constructor using the default configuration.
+	 * @see {@link JSONCodecConfiguration}
+	 * @see {@link #setDefaultConfiguration(JSONCodecConfiguration)}
+	 */
+	public JSONCodec() {
+		this(defaultConfig);
+	}
+
+	/** Constructor using a specific configuration.
+	 * @param config Configuration to be used by the codec.
+	 */
 	public JSONCodec(JSONCodecConfiguration config) {
 		this.cfg = config;
 	}
@@ -255,23 +292,34 @@ public class JSONCodec {
 		}
 		
 		try {
-			json = encodeObjectJSON(o, null);
-			return json.toString();
+			if (o instanceof JSONCompoundType) {
+				json = o;
+			} else {
+				json = encodeObjectJSON(o, null);
+			}
+			if (json instanceof JSONCompoundType) {
+				return ((JSONCompoundType)json).toString(getFormatter());
+			} else {
+				return json.toString();
+			}
 		} catch (Exception e) {
 			throw new JSONCodecException(e);
 		}
 	}
 
+	private JSONStringFormatter getFormatter() {
+		return formatterFactory.create(cfg.format);
+	}
+
 	public void encodeObject(Object o, OutputStream out) throws JSONCodecException {
-		Object json;
 		
 		if (o == null) {
 			throw new JSONCodecException("Cannot encode a toplevel null object");
 		}
 		
 		try {
-			json = encodeObjectJSON(o, null);
-			byte[] bytes = json.toString().getBytes();
+			String str = encodeObject(o);
+			byte[] bytes = str.getBytes();
 			out.write(bytes);
 		} catch (Exception e) {
 			throw new JSONCodecException(e);

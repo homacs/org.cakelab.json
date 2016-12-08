@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import org.cakelab.json.JSONArray;
 import org.cakelab.json.JSONObject;
-import org.cakelab.json.Parser;
+import org.cakelab.json.codec.Parser;
 
 public class ParserTest {
 

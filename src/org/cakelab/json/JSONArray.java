@@ -2,6 +2,9 @@ package org.cakelab.json;
 
 import java.util.ArrayList;
 
+import org.cakelab.json.codec.JSONCodec;
+import org.cakelab.json.codec.JSONStringFormatter;
+
 
 public class JSONArray extends ArrayList<Object>{
 
@@ -9,29 +12,30 @@ public class JSONArray extends ArrayList<Object>{
 
 	@Override
 	public String toString() {
-		return toString(new JSONPrettyprint(true));
+		return toString(JSONCodec.getDefaultStringFormatter());
 	}
-	public String toString(JSONPrettyprint sb) {
+	
+	public String toString(JSONStringFormatter s) {
 			
-		sb.append("[");
+		s.append("[");
 		if (!isEmpty()) {
-			sb.appendNewLine();
-			sb.indentInc();
+			s.appendNewLine();
+			s.indentInc();
 			int i = 0;
-			sb.appendIndent();
-			JSONObject.appendValue(sb, get(i));
+			s.appendIndent();
+			JSONObject.appendValue(s, get(i));
 			for (i = 1; i < size(); i++) {
-				sb.append(", ");
-				sb.appendNewLine();
-				sb.appendIndent();
-				JSONObject.appendValue(sb, get(i));
+				s.append(", ");
+				s.appendNewLine();
+				s.appendIndent();
+				JSONObject.appendValue(s, get(i));
 			}
-			sb.appendNewLine();
-			sb.indentDec();
-			sb.appendIndent();
+			s.appendNewLine();
+			s.indentDec();
+			s.appendIndent();
 		}
-		sb.append("]");
-		return sb.toString();
+		s.append("]");
+		return s.toString();
 	}
 
 	public double getDouble(int index) {

@@ -2,11 +2,30 @@ package org.cakelab.json.codec;
 
 import java.nio.charset.Charset;
 
+/**
+ * Configuration of the JSON codec (see {@link JSONCodec}).
+ * @author homac
+ *
+ */
 public class JSONCodecConfiguration {
-	public Charset charset					= Charset.defaultCharset();
-	public boolean ignoreNull 				= false;
-	public boolean ignoreMissingFields		= false;
-	public boolean considerClassAttribute	= false;
+	/** character encoding of the json string.
+	 * <p><b>Default:</b> <em>Charset.defaultCharset()</em></p>*/
+	public Charset charset					         = Charset.defaultCharset();
+	
+	/** removes all members with null values in a given object during conversion into a string.
+	 * <p><b>Default:</b> <em>false</em></p>*/
+	public boolean ignoreNull 				         = false;
+	
+	/** ignores fields that exist in the json string but not in the corresponding java class.
+	 * <p><b>Default:</b> <em>false</em></p>*/
+	public boolean ignoreMissingFields		         = false;
+	
+	/** considers the special member "class" as type of the compound type which contains it.
+	 * <p><b>Default:</b> <em>false</em></p>*/
+	public boolean considerClassAttribute	         = false;
+
+	
+	public JSONStringFormatterConfiguration format   = new JSONStringFormatterConfiguration();
 	
 	public JSONCodecConfiguration(Charset charset, boolean ignoreNull, boolean ignoreMissingFields, boolean considerClassAttribute) {
 		this.charset = charset;

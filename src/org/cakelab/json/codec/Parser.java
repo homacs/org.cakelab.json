@@ -1,8 +1,12 @@
-package org.cakelab.json;
+package org.cakelab.json.codec;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+
+import org.cakelab.json.JSONArray;
+import org.cakelab.json.JSONException;
+import org.cakelab.json.JSONObject;
 
 public class Parser {
 	Scanner scanner;
