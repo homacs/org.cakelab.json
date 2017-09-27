@@ -177,6 +177,10 @@ public class JSONCodec {
 	}
 
 
+	@SuppressWarnings("unchecked")
+	public <T> T decodeObject(JSONObject json, T target) throws JSONCodecException {
+		return (T) _decodeObject(json, target);
+	}
 	
 	private Object _decodeObject(Object json, Object target) throws JSONCodecException {
 
