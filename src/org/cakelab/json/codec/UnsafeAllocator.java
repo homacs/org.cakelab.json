@@ -26,7 +26,7 @@ public abstract class UnsafeAllocator {
 	public static UnsafeAllocator create() {
 		// try JVM
 		// public class Unsafe {
-		// public Object allocateInstance(Class<?> type);
+		//   public Object allocateInstance(Class<?> type);
 		// }
 		try {
 			Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
