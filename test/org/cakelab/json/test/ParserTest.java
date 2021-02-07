@@ -9,6 +9,7 @@ import org.cakelab.json.codec.Parser;
 public class ParserTest {
 
 	private static String testName;
+	
 	static {
 	    boolean hasAssertEnabled = false;
 	    assert hasAssertEnabled = true;

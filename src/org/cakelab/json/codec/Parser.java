@@ -8,11 +8,11 @@ import org.cakelab.json.JSONArray;
 import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
 
+/** Parser used by a JSONCodec to parse JSON strings. */
 public class Parser {
-	Scanner scanner;
+	
+	private Scanner scanner;
 	private boolean ignoreNull;
-	
-	
 	
 	public Parser(String jsonString, boolean ignoreNull) throws IOException {
 		this.ignoreNull = ignoreNull;

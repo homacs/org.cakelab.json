@@ -15,6 +15,13 @@ import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
 import org.cakelab.json.JSONPrettyprint;
 
+/**
+ * This class implements serialising/deserialising 
+ * of Java classes to and from JSON strings.
+ * 
+ * @author homac
+ *
+ */
 public class JSONCodec {
 	// TODO: needs enum support
 	
