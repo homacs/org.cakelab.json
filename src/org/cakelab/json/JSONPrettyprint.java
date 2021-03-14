@@ -335,6 +335,7 @@ public class JSONPrettyprint implements JSONStringFormatter {
 		int read;
 		try {
 			while ((read = reader.read()) > 0) {
+				// TODO: support full utf8 character range.
 				if (Character.isSupplementaryCodePoint(read)) throw new Error("Supplimentary code points (extended unicode) are not supported by JSON");
 				appendUnicodeCharacter((char)read);
 			}
@@ -370,6 +371,9 @@ public class JSONPrettyprint implements JSONStringFormatter {
 		default:
 			if (this.cfg.unicodeValues && isNonAscii(c)) {
 				append("\\u");
+				// TODO: comp: support encoding of control characters (0 - 20) too.
+				// NOTE: currently we support conversion for single byte Unicode characters only, 
+				//       and those can be mapped directly to code points, the way we do it here.
 				String s = Integer.toHexString(c);
 				// add missing leading zeros
 				for (int i = s.length(); i < 4 ; i++) append('0');

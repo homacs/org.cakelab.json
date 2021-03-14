@@ -239,7 +239,11 @@ public class Scanner {
 	private char readUnicodeControlSequence() throws IOException, JSONException {
 		int hex = readHexDigits(4);
 
-		// casting unicode value to char is said to be the right conversion
+		// Casting unicode value to char is works perfeclty for Unicode code points below 0x100.
+		
+		// FIXME: Cannot read Unicode \\uHHHH encoded code points above 0xFF
+		// NOTE: Since we are currently supporting encoding of single char 
+		//       Unicode values only, this works for data we have encoded only.
 		return (char)hex;
 	}
 
