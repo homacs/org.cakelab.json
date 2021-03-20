@@ -101,7 +101,6 @@ variables which exist in the JSON document.
 <ul>
 <li>The data model has to be hierarchical.</li>
 <li><code>static</code> and <code>transient</code> members will be ignored.</li>
-<li>Do not use <code>enum</code> (not supported yet).</li>
 <li>Do not use nested classes (not supported yet).</li>
 <li>If you are using polymorphism on classes of member attributes you have to configure the codec specially (see Section on polymorphism below).</li>
 </ul>
@@ -239,13 +238,6 @@ PolymorphismUser o2 = (PolymorphismUser) codec.decodeObject(json, PolymorphismUs
 assert object.ref_on_A_or_B.getClass().equals(o2.ref_on_A_or_B.getClass());		
 </pre>
 
-<h3>Enumaration Classes</h3>
-<code>enum</code>s require to be unique (of course). The codec does not know
-yet about enums, that's why it will literally store enums in the JSON document
-by their values and loads them as such, when decoding. As a result two enums 
-with the same values are now different, because the test on equality compares 
-their memory addresses and not their values. However, a future version of 
-org.cakelab.json will consider this.
 
 <h3>Nested Classes</h3>
 Nested classes are those classes declared inside of another class. Nested classes
