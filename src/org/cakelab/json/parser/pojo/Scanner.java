@@ -1,4 +1,4 @@
-package org.cakelab.json.codec;
+package org.cakelab.json.parser.pojo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +46,7 @@ public class Scanner {
 		this(new StringReader(jsonString));
 	}
 
+	
 	public int next() throws IOException {
 		char c = readCharacterSkipWhitespace();
 		return c;

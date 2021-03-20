@@ -1,4 +1,4 @@
-package org.cakelab.json.codec;
+package org.cakelab.json.parser.pojo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,42 +7,42 @@ import java.nio.charset.Charset;
 import org.cakelab.json.JSONArray;
 import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
+import org.cakelab.json.parser.Parser;
 
 /** Parser used by a JSONCodec to parse JSON strings. */
-public class Parser {
+public class POJOParser implements Parser {
 	
 	private Scanner scanner;
 	private boolean ignoreNull;
 	
-	public Parser(String jsonString, boolean ignoreNull) throws IOException {
+	public POJOParser(boolean ignoreNull) {
 		this.ignoreNull = ignoreNull;
+	}
+
+	private void setup(String jsonString) throws IOException {
 		scanner = new Scanner(jsonString);
 	}
+	
 
-	public Parser(String jsonString) throws IOException {
-		this(jsonString, false);
-	}
-
-	public Parser(InputStream in, Charset charset, boolean ignoreNull) throws IOException {
-		this.ignoreNull = ignoreNull;
+	private void setup(InputStream in, Charset charset) throws IOException {
 		scanner = new Scanner(in, charset);
 	}
 
-	public Parser(InputStream in, boolean ignoreNull) throws IOException {
-		this(in, Charset.defaultCharset(), ignoreNull);
-	}
 
-	public Parser(InputStream in, Charset charset) throws IOException {
-		this(in, charset, false);
-	}
-
-	public Parser(InputStream in) throws IOException {
-		this(in, Charset.defaultCharset(), false);
-	}
-
-	public JSONObject parse() throws IOException, JSONException {
+	public JSONObject parse(String jsonString) throws IOException, JSONException {
+		setup(jsonString);
 		return parseObject();
 	}
+
+	public JSONObject parse(InputStream in, Charset charset) throws IOException, JSONException {
+		setup(in, charset);
+		return parseObject();
+	}
+
+	public JSONObject parse(InputStream in) throws IOException, JSONException {
+		return parse(in, Charset.defaultCharset());
+	}
+
 
 	private JSONObject parseObject() throws IOException, JSONException {
 		JSONObject o = new JSONObject();

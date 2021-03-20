@@ -6,7 +6,6 @@ import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.nio.charset.Charset;
 import java.util.Map.Entry;
 
 import org.cakelab.json.JSONArray;
@@ -14,6 +13,8 @@ import org.cakelab.json.JSONCompoundType;
 import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
 import org.cakelab.json.JSONPrettyprint;
+import org.cakelab.json.parser.Parser;
+import org.cakelab.json.parser.ParserFactory;
 
 /**
  * This class implements serialising/deserialising 
@@ -35,6 +36,8 @@ public class JSONCodec {
 	
 	private UnsafeAllocator allocator = UnsafeAllocator.create();
 	private JSONCodecConfiguration cfg;
+	private ParserFactory parserFactory = ParserFactory.DEFAULT;
+	private Parser parser;
 	
 	/** This method allows to change the default behaviour of JSONCodecs.
 	 * @param config The new default configuration to be used by all subsequently created JSONCodec instances.
@@ -68,39 +71,9 @@ public class JSONCodec {
 	 */
 	public JSONCodec(JSONCodecConfiguration config) {
 		this.cfg = config;
+		this.parser = parserFactory.create();
 	}
-	
-	/**
-	 * @deprecated use {@link JSONCodec#JSONCodec(JSONCodecConfiguration)} instead.
-	 */
-	public JSONCodec(Charset charset, boolean ignoreNull, boolean ignoreMissingFields) {
-		cfg = new JSONCodecConfiguration();
-		cfg.charset = charset;
-		cfg.ignoreNull = ignoreNull;
-		cfg.ignoreMissingFields = ignoreMissingFields;
-	}
-	
-	/**
-	 * @deprecated use {@link JSONCodec#JSONCodec(JSONCodecConfiguration)} instead.
-	 */
-	public JSONCodec(boolean ignoreNull, boolean ignoreMissingFields) {
-		this(Charset.defaultCharset(), ignoreNull, ignoreMissingFields);
-	}
-	
-	/**
-	 * @deprecated use {@link JSONCodec#JSONCodec(JSONCodecConfiguration)} instead.
-	 */
-	public JSONCodec(Charset charset, boolean ignoreNull) {
-		this(charset, ignoreNull, false);
-	}
-	
-	/**
-	 * @deprecated use {@link JSONCodec#JSONCodec(JSONCodecConfiguration)} instead.
-	 */
-	public JSONCodec(boolean ignoreNull) {
-		this(Charset.defaultCharset(), ignoreNull, false);
-	}
-	
+
 	
 	
 	/** decodes the given json string into the given target object. 
@@ -109,8 +82,7 @@ public class JSONCodec {
 	public Object decodeObject(String jsonString, Object target) throws JSONCodecException {
 
 		try {
-			Parser parser = new Parser(jsonString);
-			JSONObject json = parser.parse();
+			JSONObject json = parser.parse(jsonString);
 			
 			return _decodeObject(json, target);
 		} catch (JSONCodecException e) {
@@ -126,8 +98,7 @@ public class JSONCodec {
 	public Object decodeObject(InputStream inputStream, Object target) throws JSONCodecException {
 
 		try {
-			Parser parser = new Parser(inputStream, cfg.charset);
-			JSONObject json = parser.parse();
+			JSONObject json = parser.parse(inputStream, cfg.charset);
 			
 			return _decodeObject(json, target);
 		} catch (JSONCodecException e) {
@@ -144,8 +115,7 @@ public class JSONCodec {
 	public Object decodeObject(InputStream inputStream,
 			Class<?> target)  throws JSONCodecException {
 		try {
-			Parser parser = new Parser(inputStream, cfg.charset);
-			JSONObject json = parser.parse();
+			JSONObject json = parser.parse(inputStream, cfg.charset);
 			
 			return _decodeObject(json, target);
 		} catch (JSONCodecException e) {
@@ -163,8 +133,8 @@ public class JSONCodec {
 	public Object decodeObject(String jsonString, Class<?> type) throws JSONCodecException {
 
 		try {
-			Parser parser = new Parser(jsonString, cfg.ignoreNull);
-			JSONObject json = parser.parse();
+			Parser parser = parserFactory.create(cfg.ignoreNull);
+			JSONObject json = parser.parse(jsonString);
 			
 			return _decodeObject(json, type);
 		} catch (JSONCodecException e) {

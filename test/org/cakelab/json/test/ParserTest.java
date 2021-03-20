@@ -4,11 +4,13 @@ import java.io.IOException;
 
 import org.cakelab.json.JSONArray;
 import org.cakelab.json.JSONObject;
-import org.cakelab.json.codec.Parser;
+import org.cakelab.json.parser.Parser;
+import org.cakelab.json.parser.ParserFactory;
 
 public class ParserTest {
 
 	private static String testName;
+	private static ParserFactory factory = ParserFactory.DEFAULT;
 	
 	static {
 	    boolean hasAssertEnabled = false;
@@ -48,11 +50,11 @@ public class ParserTest {
 				+ "\"nv2\": 2 \n" 
 				+ "}";
 		try {
-			Parser p = new Parser(jsonString);
-			JSONObject o = p.parse();
+			Parser p = factory.create();
+			JSONObject o = p.parse(jsonString);
 			
-			p = new Parser(o.toString());
-			o = p.parse();
+			p = factory.create();
+			o = p.parse(o.toString());
 			
 			o.toString();
 			
@@ -104,11 +106,11 @@ public class ParserTest {
 				+ "\"url\": \""+ url + "\" \n" 
 				+ "}";
 		try {
-			Parser p = new Parser(jsonString);
+			Parser p = factory.create();
 			
-			JSONObject o = p.parse();
-			p = new Parser(o.toString());
-			o = p.parse();
+			JSONObject o = p.parse(jsonString);
+			p = factory.create();
+			o = p.parse(o.toString());
 			
 			assert(((String) o.get("empty")).equals(""));
 			assert(((String) o.get("common")).equals(common));
@@ -137,11 +139,11 @@ public class ParserTest {
 				+ "}";
 				
 		try {
-			Parser p = new Parser(jsonString);
+			Parser p = factory.create();
 			
-			JSONObject o = p.parse();
-			p = new Parser(o.toString());
-			o = p.parse();
+			JSONObject o = p.parse(jsonString);
+			p = factory.create();
+			o = p.parse(o.toString());
 			
 			assert(o.getDouble("n1") == Double.MIN_VALUE);
 			assert(o.getDouble("n2") == Double.MAX_VALUE);
@@ -160,12 +162,12 @@ public class ParserTest {
 	private static void test(String jsonString, String name, boolean expectedSuccess) {
 		try {
 			testName = name;
-			Parser p = new Parser(jsonString);
+			Parser p = factory.create();
 			
-			JSONObject o = p.parse();
+			JSONObject o = p.parse(jsonString);
 			// reverse test
-			p = new Parser(o.toString());
-			o = p.parse();
+			p = factory.create();
+			o = p.parse(o.toString());
 			if (expectedSuccess) pass();
 			else fail(null);
 		} catch (Throwable t) {
