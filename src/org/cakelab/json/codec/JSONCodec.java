@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Map.Entry;
 
@@ -26,6 +28,7 @@ import org.cakelab.json.parser.ParserFactory;
 public class JSONCodec {
 	// TODO: needs enum support
 	
+	private static final String SPECIAL_ATTRIBUTE_CLASS = "class";
 	private static JSONCodecConfiguration defaultConfig;
 	private static JSONStringFormatter formatterFactory = new JSONPrettyprint();
 
@@ -71,7 +74,7 @@ public class JSONCodec {
 	 */
 	public JSONCodec(JSONCodecConfiguration config) {
 		this.cfg = config;
-		this.parser = parserFactory.create();
+		this.parser = parserFactory.create(cfg.ignoreNull);
 	}
 
 	
@@ -130,7 +133,7 @@ public class JSONCodec {
 	/** decodes the given json string into an object of the given target type. 
 	 * @throws JSONCodecException 
 	 */
-	public Object decodeObject(String jsonString, Class<?> type) throws JSONCodecException {
+	public <T> T decodeObject(String jsonString, Class<T> type) throws JSONCodecException {
 
 		try {
 			Parser parser = parserFactory.create(cfg.ignoreNull);
@@ -145,7 +148,7 @@ public class JSONCodec {
 	}
 	
 	
-	public Object decodeObject(JSONObject json, Class<?> clazz) throws JSONCodecException {
+	public <T> T decodeObject(JSONObject json, Class<T> clazz) throws JSONCodecException {
 		try {
 			return _decodeObject(json, clazz);
 		} catch (InstantiationException e) {
@@ -171,37 +174,55 @@ public class JSONCodec {
 		
 	}
 
-	private Object _decodeObject(Object json, Class<?> type) throws JSONCodecException, InstantiationException {
+	@SuppressWarnings("unchecked")
+	private <T> T _decodeObject(Object json, Class<T> type) throws JSONCodecException, InstantiationException {
 		if (json == null) return null;
 		if (json instanceof JSONObject) {
 			if (cfg.considerClassAttribute) {
-				String clazz = ((JSONObject) json).getString("class");
+				String clazz = ((JSONObject) json).getString(SPECIAL_ATTRIBUTE_CLASS);
 				if (clazz != null) {
 					try {
 						Class<?> derived = JSONCodec.class.getClassLoader().loadClass(clazz);
 						if (!ReflectionHelper.isSubclassOf(derived, type)) throw new JSONCodecException("class " + clazz + " is not a subclass of " + type.getSimpleName());
-						else type = derived;
+						else type = (Class<T>) derived;
 					} catch (ClassNotFoundException e) {
 						throw new JSONCodecException(e);
 					}
 				}
 			}
-			return json2object((JSONObject) json, allocator.newInstance(type));
+			if (type.isEnum()) {
+				return (T) json2enum((JSONObject) json, type);
+			} else {
+				return (T) json2object((JSONObject) json, allocator.newInstance(type));
+			}
 		} else if (json instanceof JSONArray) {
-			return json2array((JSONArray) json, Array.newInstance(type.getComponentType(), ((JSONArray) json).size()));
+			return (T) json2array((JSONArray) json, Array.newInstance(type.getComponentType(), ((JSONArray) json).size()));
 		} else {
-			return json2primitive(json.toString(), type);
+			return (T) json2primitive(json.toString(), type);
 		}
 		
 	}
 
+
+	@SuppressWarnings("unchecked")
+	private <T> T json2enum(JSONObject json, Class<T> type) throws JSONCodecException {
+		
+		try {
+			Method valueOf = type.getMethod("valueOf", String.class);
+			String name = json.getString("name");
+			if (name == null) throw new JSONCodecException("missing name of enum value for enum " + type.getCanonicalName());
+			return (T) valueOf.invoke(null, name);
+		} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			throw new JSONCodecException(e);
+		}
+	}
 
 	private Object json2object(JSONObject json, Object target) throws JSONCodecException {
 		Class<? extends Object> type = target.getClass();
 		try {
 			for (Entry<String, Object> e : json.entrySet()) {
 				try {
-					if (cfg.considerClassAttribute && e.getKey().equals("class")) continue;
+					if (cfg.considerClassAttribute && e.getKey().equals(SPECIAL_ATTRIBUTE_CLASS)) continue;
 					
 					Field field = ReflectionHelper.getDeclaredField(type, e.getKey());
 					if (isIgnoredField(field)) continue;
@@ -315,9 +336,11 @@ public class JSONCodec {
 		try {
 			// TODO: needs refactoring: see decodeObject(JSONObject) and decodeObject(String)
 		
-			if (ReflectionHelper.isPrimitive(o.getClass())) {
+			Class<?> type = o.getClass();
+			
+			if (ReflectionHelper.isPrimitive(type)) {
 				return primitive2json(o);
-			} else if (o.getClass().isArray()) {
+			} else if (type.isArray()) {
 				return array2json(o);
 			} else {
 				return object2json(o, referenceType);
@@ -362,7 +385,7 @@ public class JSONCodec {
 			field.setAccessible(accessible);
 		}
 		if (referenceType != null && referenceType != type) {
-			json.put("class", type.getName());
+			json.put(SPECIAL_ATTRIBUTE_CLASS, type.getName());
 		}
 		return json;
 	}

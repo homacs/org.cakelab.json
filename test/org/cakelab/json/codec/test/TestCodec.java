@@ -4,7 +4,7 @@ import org.cakelab.json.codec.JSONCodec;
 import org.cakelab.json.codec.JSONCodecConfiguration;
 import org.cakelab.json.codec.JSONCodecException;
 
-public class Test {
+public class TestCodec {
 
 	static class Primitives {
 		int int_1;
@@ -54,9 +54,52 @@ public class Test {
 		testObjectInObject();
 		testArrayMembers();
 		testPolymorphism();
+		testUnicode();
+		testEnum();
 	}
 
 
+	private static void testEnum() {
+		SimpleEnum expected = SimpleEnum.TWO;
+		try {
+			
+			JSONCodec codec = new JSONCodec(new JSONCodecConfiguration(false, false, true));
+			
+			String encoded = codec.encodeObject(expected);
+			
+			SimpleEnum value = codec.decodeObject(encoded, SimpleEnum.class);
+			
+			assert(expected == value);
+			
+		} catch (Throwable t) {
+			error("testEnum");
+			assert(false);
+		}
+
+	}
+	
+	
+	private static void testUnicode() {
+		SampleString ts = new SampleString();
+		String expected = "-XX:ParallelGCThreads\u003d8";
+		ts.setS(expected);
+
+		try {
+		
+			JSONCodec codec = new JSONCodec(new JSONCodecConfiguration());
+			
+			String encoded = codec.encodeObject(ts);
+			
+			
+			ts = (SampleString) codec.decodeObject(encoded, SampleString.class);
+			
+			assert(expected.equals(ts.getS()));
+			
+		} catch (Throwable t) {
+			error("testUnicode");
+			assert(false);
+		}
+	}
 
 
 	private static void testPolymorphism() {

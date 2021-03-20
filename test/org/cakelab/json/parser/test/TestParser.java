@@ -1,4 +1,4 @@
-package org.cakelab.json.test;
+package org.cakelab.json.parser.test;
 
 import java.io.IOException;
 
@@ -8,7 +8,7 @@ import org.cakelab.json.JSONObject;
 import org.cakelab.json.parser.Parser;
 import org.cakelab.json.parser.ParserFactory;
 
-public class ParserTest {
+public class TestParser {
 
 	private static String testName;
 	private static ParserFactory factory = ParserFactory.DEFAULT;

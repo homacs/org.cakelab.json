@@ -23,11 +23,9 @@ public class POJOParser implements Parser {
 		scanner = new Scanner(jsonString);
 	}
 	
-
 	private void setup(InputStream in, Charset charset) throws IOException {
 		scanner = new Scanner(in, charset);
 	}
-
 
 	public JSONObject parseObject(String jsonString) throws IOException, JSONException {
 		setup(jsonString);

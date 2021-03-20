@@ -1,6 +1,6 @@
-package org.cakelab.json.test.types;
+package org.cakelab.json.codec.test;
 
-public class TestString {
+public class SampleString {
 	private String s;
 
 	public String getS() {
