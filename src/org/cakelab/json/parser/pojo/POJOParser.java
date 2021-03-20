@@ -29,22 +29,42 @@ public class POJOParser implements Parser {
 	}
 
 
-	public JSONObject parse(String jsonString) throws IOException, JSONException {
+	public JSONObject parseObject(String jsonString) throws IOException, JSONException {
 		setup(jsonString);
-		return parseObject();
+		return parseJSONObject();
 	}
 
-	public JSONObject parse(InputStream in, Charset charset) throws IOException, JSONException {
+	public JSONObject parseObject(InputStream in, Charset charset) throws IOException, JSONException {
 		setup(in, charset);
-		return parseObject();
+		return parseJSONObject();
 	}
 
-	public JSONObject parse(InputStream in) throws IOException, JSONException {
+	public JSONObject parseObject(InputStream in) throws IOException, JSONException {
+		return parseObject(in, Charset.defaultCharset());
+	}
+
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T parse(String jsonString) throws IOException, JSONException {
+		setup(jsonString);
+		return (T)parseValue();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T parse(InputStream in, Charset charset) throws IOException, JSONException {
+		setup(in, charset);
+		return (T)parseValue();
+	}
+
+	@Override
+	public <T> T parse(InputStream in) throws IOException, JSONException {
 		return parse(in, Charset.defaultCharset());
 	}
 
 
-	private JSONObject parseObject() throws IOException, JSONException {
+	private JSONObject parseJSONObject() throws IOException, JSONException {
 		JSONObject o = new JSONObject();
 		
 		scanCharToken(Token.TYPE_LEFTBRACE);
@@ -104,7 +124,7 @@ public class POJOParser implements Parser {
 		char lookahead = scanner.getLookahead();
 		switch(lookahead) {
 		case Token.TYPE_LEFTBRACE:
-			value = parseObject();
+			value = parseJSONObject();
 			break;
 		case Token.TYPE_LEFTBRACKET:
 			value = parseArray();

@@ -3,6 +3,7 @@ package org.cakelab.json.test;
 import java.io.IOException;
 
 import org.cakelab.json.JSONArray;
+import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
 import org.cakelab.json.parser.Parser;
 import org.cakelab.json.parser.ParserFactory;
@@ -36,7 +37,32 @@ public class ParserTest {
 		test("{ \"array\" : [d,t] }", "illegal array elements", false);
 		test("{ \"eins\" : { \"zwei\" : {}}, \"drei\" : {} }", "nested objects", true);
 		testComplexObject();
+		
+		testValues();
 	}
+
+	
+	private static void testValues() {
+		testName = "testValues";
+		try {
+			testValue(1.0);
+			testValue(true);
+			testValue(false);
+			testValue(null);
+			
+			pass();
+		} catch (Throwable t) {
+			fail(t);
+		}
+	}
+	
+	private static void testValue(Object expect) throws IOException, JSONException {
+		Parser p = factory.create();
+		Object value = p.parse(String.valueOf(expect));
+		assert(expect == value || expect.equals(value));
+		
+	}
+
 
 	private static void testComplexObject() {
 		testName = "complex object";
@@ -51,10 +77,10 @@ public class ParserTest {
 				+ "}";
 		try {
 			Parser p = factory.create();
-			JSONObject o = p.parse(jsonString);
+			JSONObject o = p.parseObject(jsonString);
 			
 			p = factory.create();
-			o = p.parse(o.toString());
+			o = p.parseObject(o.toString());
 			
 			o.toString();
 			
@@ -108,9 +134,9 @@ public class ParserTest {
 		try {
 			Parser p = factory.create();
 			
-			JSONObject o = p.parse(jsonString);
+			JSONObject o = p.parseObject(jsonString);
 			p = factory.create();
-			o = p.parse(o.toString());
+			o = p.parseObject(o.toString());
 			
 			assert(((String) o.get("empty")).equals(""));
 			assert(((String) o.get("common")).equals(common));
@@ -141,9 +167,9 @@ public class ParserTest {
 		try {
 			Parser p = factory.create();
 			
-			JSONObject o = p.parse(jsonString);
+			JSONObject o = p.parseObject(jsonString);
 			p = factory.create();
-			o = p.parse(o.toString());
+			o = p.parseObject(o.toString());
 			
 			assert(o.getDouble("n1") == Double.MIN_VALUE);
 			assert(o.getDouble("n2") == Double.MAX_VALUE);
@@ -164,10 +190,10 @@ public class ParserTest {
 			testName = name;
 			Parser p = factory.create();
 			
-			JSONObject o = p.parse(jsonString);
+			JSONObject o = p.parseObject(jsonString);
 			// reverse test
 			p = factory.create();
-			o = p.parse(o.toString());
+			o = p.parseObject(o.toString());
 			if (expectedSuccess) pass();
 			else fail(null);
 		} catch (Throwable t) {

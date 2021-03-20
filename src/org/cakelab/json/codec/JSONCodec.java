@@ -82,7 +82,7 @@ public class JSONCodec {
 	public Object decodeObject(String jsonString, Object target) throws JSONCodecException {
 
 		try {
-			JSONObject json = parser.parse(jsonString);
+			JSONObject json = parser.parseObject(jsonString);
 			
 			return _decodeObject(json, target);
 		} catch (JSONCodecException e) {
@@ -98,7 +98,7 @@ public class JSONCodec {
 	public Object decodeObject(InputStream inputStream, Object target) throws JSONCodecException {
 
 		try {
-			JSONObject json = parser.parse(inputStream, cfg.charset);
+			JSONObject json = parser.parseObject(inputStream, cfg.charset);
 			
 			return _decodeObject(json, target);
 		} catch (JSONCodecException e) {
@@ -115,7 +115,7 @@ public class JSONCodec {
 	public Object decodeObject(InputStream inputStream,
 			Class<?> target)  throws JSONCodecException {
 		try {
-			JSONObject json = parser.parse(inputStream, cfg.charset);
+			JSONObject json = parser.parseObject(inputStream, cfg.charset);
 			
 			return _decodeObject(json, target);
 		} catch (JSONCodecException e) {
@@ -134,7 +134,7 @@ public class JSONCodec {
 
 		try {
 			Parser parser = parserFactory.create(cfg.ignoreNull);
-			JSONObject json = parser.parse(jsonString);
+			JSONObject json = parser.parseObject(jsonString);
 			
 			return _decodeObject(json, type);
 		} catch (JSONCodecException e) {
