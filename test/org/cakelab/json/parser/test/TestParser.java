@@ -7,11 +7,13 @@ import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
 import org.cakelab.json.parser.Parser;
 import org.cakelab.json.parser.ParserFactory;
+import org.cakelab.json.parser.jni.NativeParserFactory;
+import org.cakelab.json.parser.pojo.POJOParserFactory;
 
 public class TestParser {
 
 	private static String testName;
-	private static ParserFactory factory = ParserFactory.DEFAULT;
+	private static ParserFactory factory;
 	
 	static {
 	    boolean hasAssertEnabled = false;
@@ -22,6 +24,17 @@ public class TestParser {
 	}
 
 	public static void main(String[] args) throws IOException {
+		factory = new POJOParserFactory();
+		testAll();
+		if (NativeParserFactory.AVAILABLE) {
+			factory = new NativeParserFactory();
+			testAll();
+		} else {
+			System.err.println("native library not available --> tests omitted");
+		}
+	}
+
+	public static void testAll() {
 		test("{}", "toplevel object", true);
 		test("{ \t\n}   \r\f", "whitespaces", true);
 		test("{ \"empty\" : }", "empty value", false);
@@ -40,7 +53,7 @@ public class TestParser {
 		
 		testValues();
 	}
-
+	
 	
 	private static void testValues() {
 		testName = "testValues";
