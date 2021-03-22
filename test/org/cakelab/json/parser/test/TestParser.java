@@ -15,6 +15,7 @@ public class TestParser {
 	private static String testName;
 	private static ParserFactory factory;
 	
+	
 	static {
 	    boolean hasAssertEnabled = false;
 	    assert hasAssertEnabled = true;
@@ -24,14 +25,14 @@ public class TestParser {
 	}
 
 	public static void main(String[] args) throws IOException {
-		factory = new POJOParserFactory();
-		testAll();
 		if (NativeParserFactory.AVAILABLE) {
 			factory = new NativeParserFactory();
 			testAll();
 		} else {
 			System.err.println("native library not available --> tests omitted");
 		}
+		factory = new POJOParserFactory();
+		testAll();
 	}
 
 	public static void testAll() {

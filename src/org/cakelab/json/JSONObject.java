@@ -9,7 +9,12 @@ import org.cakelab.json.codec.JSONStringFormatter;
 public class JSONObject extends HashMap<String, Object> implements JSONCompoundType {
 	private static final long serialVersionUID = 1L;
 
-
+	@Override
+	public Object put(String name, Object value) {
+		return super.put(name, value);
+	}
+	
+	
 	public static void appendValue(JSONStringFormatter s, Object o) {
 		if (o == null) {
 			s.append("null");

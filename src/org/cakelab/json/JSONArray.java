@@ -6,10 +6,17 @@ import org.cakelab.json.codec.JSONCodec;
 import org.cakelab.json.codec.JSONStringFormatter;
 
 
-public class JSONArray extends ArrayList<Object>{
+public class JSONArray extends ArrayList<Object> implements JSONCompoundType {
 
 	private static final long serialVersionUID = 1L;
 
+	
+	@Override
+	public boolean add(Object o) {
+		return super.add(o);
+	}
+	
+	
 	@Override
 	public String toString() {
 		return toString(JSONCodec.getDefaultStringFormatter());
