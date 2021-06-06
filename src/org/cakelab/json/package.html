@@ -49,8 +49,8 @@ such as Integer, Double, Boolean etc.
 Can be parsed with an instance of the class Parser of this package:
 
 <pre>
-Parser p = new Parser(jsonString);
-JSONObject json = p.parse();
+Parser p = ParserFactory.getDefault().create();
+JSONObject json = p.parse(jsonString);
 </pre>
 <p>
 The given example above would result in an object hierarchy like this:
