@@ -39,7 +39,7 @@ public class JSONCodec {
 	
 	private UnsafeAllocator allocator = UnsafeAllocator.create();
 	private JSONCodecConfiguration cfg;
-	private ParserFactory parserFactory = ParserFactory.DEFAULT;
+	private ParserFactory parserFactory = ParserFactory.getDefault();
 	private Parser parser;
 	
 	/** This method allows to change the default behaviour of JSONCodecs.
