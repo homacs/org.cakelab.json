@@ -35,13 +35,19 @@ public class PerfParser {
 		int iterations = 1000000;
 		
 		try {
-			Parser p = factory.create();
 			long start = System.currentTimeMillis();
+			Parser p = factory.create();
+			Object o = null;
+			long probe = start;
 			for (int i = 0; i < iterations; i++) {
-				p.parse(jsonString);
+				String json = "{\"probe\":" + (probe) + ", \"o\":" + jsonString + "}";
+				o = p.parse(json);
+				probe += (o != null) ? 1 : 0;
 			}
 			long stop = System.currentTimeMillis();
-			System.out.println(factory.getClass().getSimpleName() + ": " + (double)(stop - start)/iterations );
+			System.out.println(factory.getClass().getSimpleName() + ": " + (double)(stop - start)/iterations + " ms/object");
+			System.out.println("probe: " + probe );
+			
 		} catch (IOException | JSONException e) {
 			e.printStackTrace();
 		}
@@ -65,7 +71,7 @@ public class PerfParser {
 		JSONCompoundType top = stack.peek();
 		
 		for (int i = 0; i < entries; i++) {
-			switch(rand.nextInt(5)) {
+			switch(rand.nextInt(6)) {
 			case MEMBER_OBJECT: // enter new object
 				JSONObject o = new JSONObject();
 				addMember(top, "object", o);
@@ -86,10 +92,10 @@ public class PerfParser {
 				addMember(top, "string", "\"string\"");
 				break;
 			case MEMBER_NUMBER:
-				addMember(top, "number", "4711.7353");
+				addMember(top, "number", 4711.7353);
 				break;
 			case MEMBER_BOOL:
-				addMember(top, "boolean", "true");
+				addMember(top, "boolean", true);
 				break;
 			}
 			top = stack.peek();
