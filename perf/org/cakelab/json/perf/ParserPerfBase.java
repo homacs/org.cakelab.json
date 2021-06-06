@@ -10,28 +10,11 @@ import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
 import org.cakelab.json.parser.Parser;
 import org.cakelab.json.parser.ParserFactory;
-import org.cakelab.json.parser.jni.NativeParserFactory;
-import org.cakelab.json.parser.pojo.POJOParserFactory;
 
-public class PerfParser {
+public class ParserPerfBase {
 
 	
-	static final ParserFactory nativeParserFactory = new NativeParserFactory();
-	static final ParserFactory pojoParserFactory = new POJOParserFactory();
-	
-	
-	public static void main(String[] args) {
-		int member = 10;
-		
-		String jsonString = generateJson(member);
-		measure(pojoParserFactory, jsonString);
-		measure(nativeParserFactory, jsonString);
-		measure(pojoParserFactory, jsonString);
-		measure(nativeParserFactory, jsonString);
-
-	}
-
-	private static void measure(ParserFactory factory, String jsonString) {
+	public static void measure(ParserFactory factory, String jsonString) {
 		int iterations = 1000000;
 		
 		try {
@@ -60,7 +43,7 @@ public class PerfParser {
 	static final int MEMBER_NUMBER = 4;
 	static final int MEMBER_BOOL = 5;
 
-	private static String generateJson(int entries) {
+	public static String generateJson(int entries) {
 		Random rand = new Random();
 		
 		
