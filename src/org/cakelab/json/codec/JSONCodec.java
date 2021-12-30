@@ -1,5 +1,8 @@
 package org.cakelab.json.codec;
 
+import static org.cakelab.json.JSONDefaults.CODEC_CONFIG;
+
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -12,157 +15,131 @@ import java.util.Map.Entry;
 
 import org.cakelab.json.JSONArray;
 import org.cakelab.json.JSONCompoundType;
+import org.cakelab.json.JSONDefaults;
 import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
-import org.cakelab.json.JSONPrettyprint;
-import org.cakelab.json.parser.Parser;
-import org.cakelab.json.parser.ParserFactory;
+import org.cakelab.json.parser.JSONParser;
 
 /**
  * This class implements serialising/deserialising 
  * of Java classes to and from JSON strings.
  * 
+ * <h3>Multi-Threading</h3>
+ * Not thread safe.
+ * 
  * @author homac
  *
  */
 public class JSONCodec {
-	// TODO: needs enum support
 	
 	private static final String SPECIAL_ATTRIBUTE_CLASS = "class";
-	private static JSONCodecConfiguration defaultConfig;
-	private static JSONStringFormatter formatterFactory = new JSONPrettyprint();
-
-	static {
-		setDefaultConfiguration(new JSONCodecConfiguration());
-	}
-	
 	
 	private UnsafeAllocator allocator = UnsafeAllocator.create();
 	private JSONCodecConfiguration cfg;
-	private ParserFactory parserFactory = ParserFactory.getDefault();
-	private Parser parser;
+	private JSONParser parser;
+	private ReflectionHelper reflectionHelper = new ReflectionHelper();
 	
-	/** This method allows to change the default behaviour of JSONCodecs.
-	 * @param config The new default configuration to be used by all subsequently created JSONCodec instances.
-	 */
-	public static void setDefaultConfiguration(JSONCodecConfiguration config) {
-		defaultConfig = config;
-	}
-
-	/** 
-	 * Returns a string formatter with the default configuration used to encode 
-	 * Java objects to JSON. The configuration of the default formatter is 
-	 * influenced by the globally set default configuration.
-	 * @return
-	 */
-	public static JSONStringFormatter getDefaultStringFormatter() {
-		return formatterFactory.create(defaultConfig.format);
-	}
-
-
 	/**
 	 * Constructor using the default configuration.
 	 * @see {@link JSONCodecConfiguration}
-	 * @see {@link #setDefaultConfiguration(JSONCodecConfiguration)}
+	 * @see {@link JSONDefaults#CODEC_CONFIG}
 	 */
 	public JSONCodec() {
-		this(defaultConfig);
+		this(CODEC_CONFIG);
 	}
 
 	/** Constructor using a specific configuration.
 	 * @param config Configuration to be used by the codec.
 	 */
 	public JSONCodec(JSONCodecConfiguration config) {
-		this.cfg = config;
-		this.parser = parserFactory.create(cfg.ignoreNull);
+		this.cfg = new JSONCodecConfiguration(config);
+		this.parser = cfg.parserFactory.create(cfg.ignoreNull);
 	}
-
-	
 	
 	/** decodes the given json string into the given target object. 
-	 * @throws JSONCodecException 
+	 * @throws JSONException 
 	 */
-	public Object decodeObject(String jsonString, Object target) throws JSONCodecException {
+	public Object decodeObject(String jsonString, Object target) throws JSONException {
 
 		try {
 			JSONObject json = parser.parseObject(jsonString);
 			
 			return _decodeObject(json, target);
-		} catch (JSONCodecException e) {
+		} catch (JSONException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new JSONCodecException(e);
+			throw new JSONException(e);
 		}
 	}
 	
 	/** decodes the given json string from input stream into the given target object. 
-	 * @throws JSONCodecException 
+	 * @throws JSONException 
 	 */
-	public Object decodeObject(InputStream inputStream, Object target) throws JSONCodecException {
+	public Object decodeObject(InputStream inputStream, Object target) throws JSONException {
 
 		try {
 			JSONObject json = parser.parseObject(inputStream, cfg.charset);
 			
 			return _decodeObject(json, target);
-		} catch (JSONCodecException e) {
+		} catch (JSONException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new JSONCodecException(e);
+			throw new JSONException(e);
 		}
 	}
 
 	
 	/** decodes the given json string from input stream into an object of the given target type. 
-	 * @throws JSONCodecException 
+	 * @throws JSONException 
 	 */
 	public Object decodeObject(InputStream inputStream,
-			Class<?> target)  throws JSONCodecException {
+			Class<?> target)  throws JSONException {
 		try {
 			JSONObject json = parser.parseObject(inputStream, cfg.charset);
 			
 			return _decodeObject(json, target);
-		} catch (JSONCodecException e) {
+		} catch (JSONException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new JSONCodecException(e);
+			throw new JSONException(e);
 		}
 	}
 
 
 	
 	/** decodes the given json string into an object of the given target type. 
-	 * @throws JSONCodecException 
+	 * @throws JSONException 
 	 */
-	public <T> T decodeObject(String jsonString, Class<T> type) throws JSONCodecException {
+	public <T> T decodeObject(String jsonString, Class<T> type) throws JSONException {
 
 		try {
-			Parser parser = parserFactory.create(cfg.ignoreNull);
+			JSONParser parser = cfg.parserFactory.create(cfg.ignoreNull);
 			JSONObject json = parser.parseObject(jsonString);
 			
 			return _decodeObject(json, type);
-		} catch (JSONCodecException e) {
+		} catch (JSONException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new JSONCodecException(e);
+			throw new JSONException(e);
 		}
 	}
 	
 	
-	public <T> T decodeObject(JSONObject json, Class<T> clazz) throws JSONCodecException {
+	public <T> T decodeObject(JSONObject json, Class<T> clazz) throws JSONException {
 		try {
 			return _decodeObject(json, clazz);
 		} catch (InstantiationException e) {
-			throw new JSONCodecException(e);
+			throw new JSONException(e);
 		}
 	}
 
 
 	@SuppressWarnings("unchecked")
-	public <T> T decodeObject(JSONObject json, T target) throws JSONCodecException {
+	public <T> T decodeObject(JSONObject json, T target) throws JSONException {
 		return (T) _decodeObject(json, target);
 	}
 	
-	private Object _decodeObject(Object json, Object target) throws JSONCodecException {
+	private Object _decodeObject(Object json, Object target) throws JSONException {
 
 		if (json instanceof JSONObject) {
 			return json2object((JSONObject) json, target);
@@ -175,18 +152,18 @@ public class JSONCodec {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> T _decodeObject(Object json, Class<T> type) throws JSONCodecException, InstantiationException {
+	private <T> T _decodeObject(Object json, Class<T> type) throws JSONException, InstantiationException {
 		if (json == null) return null;
 		if (json instanceof JSONObject) {
-			if (cfg.considerClassAttribute) {
+			if (cfg.supportClassAttribute) {
 				String clazz = ((JSONObject) json).getString(SPECIAL_ATTRIBUTE_CLASS);
 				if (clazz != null) {
 					try {
 						Class<?> derived = JSONCodec.class.getClassLoader().loadClass(clazz);
-						if (!ReflectionHelper.isSubclassOf(derived, type)) throw new JSONCodecException("class " + clazz + " is not a subclass of " + type.getSimpleName());
+						if (!ReflectionHelper.isSubclassOf(derived, type)) throw new JSONException("class " + clazz + " is not a subclass of " + type.getSimpleName());
 						else type = (Class<T>) derived;
 					} catch (ClassNotFoundException e) {
-						throw new JSONCodecException(e);
+						throw new JSONException(e);
 					}
 				}
 			}
@@ -205,24 +182,24 @@ public class JSONCodec {
 
 
 	@SuppressWarnings("unchecked")
-	private <T> T json2enum(JSONObject json, Class<T> type) throws JSONCodecException {
+	private <T> T json2enum(JSONObject json, Class<T> type) throws JSONException {
 		
 		try {
 			Method valueOf = type.getMethod("valueOf", String.class);
 			String name = json.getString("name");
-			if (name == null) throw new JSONCodecException("missing name of enum value for enum " + type.getCanonicalName());
+			if (name == null) throw new JSONException("missing name of enum value for enum " + type.getCanonicalName());
 			return (T) valueOf.invoke(null, name);
 		} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			throw new JSONCodecException(e);
+			throw new JSONException(e);
 		}
 	}
 
-	private Object json2object(JSONObject json, Object target) throws JSONCodecException {
+	private Object json2object(JSONObject json, Object target) throws JSONException {
 		Class<? extends Object> type = target.getClass();
 		try {
 			for (Entry<String, Object> e : json.entrySet()) {
 				try {
-					if (cfg.considerClassAttribute && e.getKey().equals(SPECIAL_ATTRIBUTE_CLASS)) continue;
+					if (cfg.supportClassAttribute && e.getKey().equals(SPECIAL_ATTRIBUTE_CLASS)) continue;
 					
 					Field field = ReflectionHelper.getDeclaredField(type, e.getKey());
 					if (isIgnoredField(field)) continue;
@@ -235,17 +212,17 @@ public class JSONCodec {
 					}
 					field.setAccessible(accessible);
 				} catch (NoSuchFieldException ex) {
-					if (!cfg.ignoreMissingFields) throw new JSONCodecException(ex);
+					if (!cfg.ignoreMissingFields) throw new JSONException(ex);
 				}
 			}
 		} catch (IllegalArgumentException | IllegalAccessException | InstantiationException e) {
-			throw new JSONCodecException(e);
+			throw new JSONException(e);
 		}
 		
 		return target;
 	}
 
-	private Object json2array(JSONArray json, Object target) throws JSONCodecException {
+	private Object json2array(JSONArray json, Object target) throws JSONException {
 		try {
 			for (int i = 0; i < json.size(); i++) {
 				Object jsonValue = json.get(i);
@@ -254,7 +231,7 @@ public class JSONCodec {
 				Array.set(target, i, value);
 			}
 		} catch (InstantiationException e) {
-			throw new JSONCodecException(e);
+			throw new JSONException(e);
 		}
 		return target;
 	}
@@ -281,58 +258,41 @@ public class JSONCodec {
 			return Boolean.parseBoolean(body);
 		}
 		return null;
-		
-		
 	}
 
 
-	public String encodeObject(Object o) throws JSONCodecException {
+	public String encodeObject(Object o) throws JSONException {
+		try {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			encodeObject(o, out);
+			String charset = cfg.formatter.getConfiguration().charset.name();
+			return out.toString(charset);
+		} catch (Exception e) {
+			throw new JSONException(e);
+		}
+	}
+
+	public void encodeObject(Object o, OutputStream out) throws JSONException {
 		Object json;
 		
 		if (o == null) {
-			throw new JSONCodecException("Cannot encode a toplevel null object");
+			throw new JSONException("Cannot encode a toplevel null object");
 		}
 		
-		try {
-			if (o instanceof JSONCompoundType) {
-				json = o;
-			} else {
-				json = encodeObjectJSON(o, null);
-			}
-			if (json instanceof JSONCompoundType) {
-				return ((JSONCompoundType)json).toString(getFormatter());
-			} else {
-				return json.toString();
-			}
-		} catch (Exception e) {
-			throw new JSONCodecException(e);
-		}
-	}
-
-	private JSONStringFormatter getFormatter() {
-		return formatterFactory.create(cfg.format);
-	}
-
-	public void encodeObject(Object o, OutputStream out) throws JSONCodecException {
-		
-		if (o == null) {
-			throw new JSONCodecException("Cannot encode a toplevel null object");
+		if (o instanceof JSONCompoundType) {
+			json = o;
+		} else {
+			json = encodeObjectJSON(o, null);
 		}
 		
-		try {
-			String str = encodeObject(o);
-			byte[] bytes = str.getBytes();
-			out.write(bytes);
-		} catch (Exception e) {
-			throw new JSONCodecException(e);
-		}
+		cfg.formatter.format(out, json);
 	}
 
-	/** returns a JSONObject or JSONArray depending on the given 
-	 * object o to be encoded.
+	/** returns a JSONObject, JSONArray or primitive value (including String)
+	 * depending on the given object and reference type.
 	 * @param o Object to be encoded.
 	 * @param referenceType Class of the object or some subclass, in case you want just a particular subset of the members */
-	public Object encodeObjectJSON(Object o, Class<?> referenceType) throws JSONCodecException {
+	public Object encodeObjectJSON(Object o, Class<?> referenceType) throws JSONException {
 		try {
 			// TODO: needs refactoring: see decodeObject(JSONObject) and decodeObject(String)
 		
@@ -345,20 +305,21 @@ public class JSONCodec {
 			} else {
 				return object2json(o, referenceType);
 			}
-		} catch (JSONCodecException e) {
+		} catch (JSONException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new JSONCodecException(e);
+			throw new JSONException(e);
 		}
 	}
 
-	/** Encodes the given object into a JSONObject or JSONArray, depending on the given 
-	 * object.
+	/** Encodes the given object into a JSONObject, JSONArray 
+	 * or a JSON supported primitive type (incl. String), 
+	 * depending on the given object type.
 	 * @param o
 	 * @return
-	 * @throws JSONCodecException 
+	 * @throws JSONException 
 	 */
-	public Object encodeObjectJSON(Object o) throws JSONCodecException {
+	public Object encodeObjectJSON(Object o) throws JSONException {
 		return encodeObjectJSON(o, o.getClass());
 	}
 
@@ -367,10 +328,10 @@ public class JSONCodec {
 		return o;
 	}
 
-	private JSONObject object2json(Object o, Class<?> referenceType) throws JSONCodecException, IllegalArgumentException, IllegalAccessException {
+	private JSONObject object2json(Object o, Class<?> referenceType) throws JSONException, IllegalArgumentException, IllegalAccessException {
 		JSONObject json = new JSONObject();
 		Class<?> type = o.getClass();
-		for (Field field : ReflectionHelper.getDeclaredFields(type)) {
+		for (Field field : reflectionHelper.getDeclaredFields(type)) {
 			
 			// ignore transient fields
 			if (isIgnoredField(field)) continue;
@@ -390,7 +351,7 @@ public class JSONCodec {
 		return json;
 	}
 
-	private JSONArray array2json(Object o) throws ArrayIndexOutOfBoundsException, IllegalArgumentException, IOException, JSONException, JSONCodecException {
+	private JSONArray array2json(Object o) throws ArrayIndexOutOfBoundsException, IllegalArgumentException, IOException, JSONException, JSONException {
 		JSONArray json = new JSONArray();
 		for (int i = 0; i < Array.getLength(o); i++) {
 			Object value = Array.get(o, i);

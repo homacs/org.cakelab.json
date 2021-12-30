@@ -2,8 +2,7 @@ package org.cakelab.json;
 
 import java.util.ArrayList;
 
-import org.cakelab.json.codec.JSONCodec;
-import org.cakelab.json.codec.JSONStringFormatter;
+import org.cakelab.json.format.JSONFormatter;
 
 
 public class JSONArray extends ArrayList<Object> implements JSONCompoundType {
@@ -16,41 +15,26 @@ public class JSONArray extends ArrayList<Object> implements JSONCompoundType {
 		return super.add(o);
 	}
 	
-	
 	@Override
 	public String toString() {
-		return toString(JSONCodec.getDefaultStringFormatter());
+		try {
+			return toString(JSONDefaults.FORMATTER);
+		} catch (JSONException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
-	public String toString(JSONStringFormatter s) {
-			
-		s.append("[");
-		if (!isEmpty()) {
-			s.appendNewLine();
-			s.indentInc();
-			int i = 0;
-			s.appendIndent();
-			JSONObject.appendValue(s, get(i));
-			for (i = 1; i < size(); i++) {
-				s.append(", ");
-				s.appendNewLine();
-				s.appendIndent();
-				JSONObject.appendValue(s, get(i));
-			}
-			s.appendNewLine();
-			s.indentDec();
-			s.appendIndent();
-		}
-		s.append("]");
-		return s.toString();
+	@Override
+	public String toString(JSONFormatter formatter) throws JSONException {
+		return formatter.format(this);
 	}
 
 	public double getDouble(int index) {
-		return JSONObject.doublevalue(get(index));
+		return doublevalue(get(index));
 	}
 
 	public long getLong(int index) {
-		return JSONObject.longvalue(get(index));
+		return longvalue(get(index));
 	}
 
 	

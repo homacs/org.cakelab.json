@@ -1,4 +1,4 @@
-package org.cakelab.json.codec.test;
+package org.cakelab.json.codec.samples;
 
 public class SampleString {
 	private String s;

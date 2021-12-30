@@ -8,18 +8,18 @@ import org.cakelab.json.JSONArray;
 import org.cakelab.json.JSONCompoundType;
 import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
-import org.cakelab.json.parser.Parser;
-import org.cakelab.json.parser.ParserFactory;
+import org.cakelab.json.parser.JSONParser;
+import org.cakelab.json.parser.JSONParserFactory;
 
 public class ParserPerfBase {
 
 	
-	public static void measure(ParserFactory factory, String jsonString) {
+	public static void measure(JSONParserFactory factory, String jsonString) {
 		int iterations = 1000000;
 		
 		try {
 			long start = System.currentTimeMillis();
-			Parser p = factory.create();
+			JSONParser p = factory.create();
 			Object o = null;
 			long probe = start;
 			for (int i = 0; i < iterations; i++) {

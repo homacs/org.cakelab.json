@@ -1,6 +1,8 @@
-package org.cakelab.json.parser.pojo;
+package org.cakelab.json.parser.basic;
 
 public class Token {
+	/* Token category: Character */
+	static final int TYPE_CATEGORY_CHARACTER = 0;
 	static final int TYPE_LEFTBRACE = '{';
 	static final int TYPE_RIGHTBRACE = '}';
 	static final int TYPE_COMMA = ',';
@@ -13,24 +15,20 @@ public class Token {
 	static final int TYPE_MINUS = '-';
 	static final int TYPE_SLASH = '/';
 	
-	static final int TYPE_VALUE_TYPE_BASE = 1024;
-	static final int TYPE_STRING = TYPE_VALUE_TYPE_BASE + 0;
-	static final int TYPE_NUMBER = TYPE_VALUE_TYPE_BASE + 1;
-	static final int TYPE_BOOLEAN = TYPE_VALUE_TYPE_BASE + 2;
-	static final int TYPE_NULL = TYPE_VALUE_TYPE_BASE + 3;
+	/* Token category: Value */
+	static final int TYPE_CATEGORY_VALUE = TYPE_CATEGORY_CHARACTER + 1024;
+	static final int TYPE_STRING = TYPE_CATEGORY_VALUE + 0;
+	static final int TYPE_NUMBER = TYPE_CATEGORY_VALUE + 1;
+	static final int TYPE_BOOLEAN = TYPE_CATEGORY_VALUE + 2;
+	static final int TYPE_NULL = TYPE_CATEGORY_VALUE + 3;
 	
 	
-	static final int TYPE_META_TYPE_BASE = 2048;
-	
-	static final int TYPE_NAME = TYPE_META_TYPE_BASE + 0;
-	static final int TYPE_OBJECT = TYPE_META_TYPE_BASE + 4;
-	static final int TYPE_ARRAY = TYPE_META_TYPE_BASE + 5;
-	static final int TYPE_NAME_VALUE_PAIR = TYPE_META_TYPE_BASE + 6;
+	/* Token category: Symbol */
+	static final int TYPE_CATEGORY_SYMBOL = TYPE_CATEGORY_VALUE + 1024;
+	static final int TYPE_NAME = TYPE_CATEGORY_SYMBOL + 0;
 	
 	
-	
-	
-	
+
 	static final int TYPE_UNKNOWN = Integer.MAX_VALUE;
 	
 

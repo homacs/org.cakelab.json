@@ -4,16 +4,18 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
-public class ReflectionHelper {
+import org.cakelab.json.JSONException;
 
-	private static HashMap<Class<?>, Vector<Field>> fieldLists = new HashMap<Class<?>, Vector<Field>> ();
-	private static HashMap<Class<?>, HashMap<String, Field>> fieldMaps = new HashMap<Class<?>, HashMap<String, Field>> ();
+public class ReflectionHelper {
 	
+	private Map<Class<?>, Vector<Field>> fieldListsCache = new HashMap<>();
+	private Map<Class<?>, Map<String, Field>> fieldMapsCache = new HashMap<>();
 	
-	public static	List<Field> getDeclaredFields(Class<?> type) {
-		Vector<Field> fields = fieldLists.get(type);
+	public List<Field> getDeclaredFields(Class<?> type) {
+		Vector<Field> fields = fieldListsCache.get(type);
 		if (fields == null) {
 			fields = new Vector<Field>();
 			if (!type.equals(Object.class)) {
@@ -23,30 +25,29 @@ public class ReflectionHelper {
 			for (Field f : type.getDeclaredFields()) {
 				fields.add(f);
 			}
-			fieldLists.put(type, fields);
+			fieldListsCache.put(type, fields);
 		}
 		return fields;
 	}
 
-	public static HashMap<String, Field> getDeclaredFieldsMap(Class<?> type) {
-		HashMap<String, Field> map = fieldMaps.get(type);
+	public Map<String, Field> getDeclaredFieldsMap(Class<?> type) {
+		Map<String, Field> map = fieldMapsCache.get(type);
 		if (map == null) {
 			map = new HashMap<String, Field>();
 			if (!type.equals(Object.class)) {
-				HashMap<String, Field> superFields = getDeclaredFieldsMap(type.getSuperclass());
+				Map<String, Field> superFields = getDeclaredFieldsMap(type.getSuperclass());
 				map.putAll(superFields);
 			}
 			for (Field f : type.getDeclaredFields()) {
 				map.put(f.getName(), f);
 			}
-			fieldMaps.put(type,  map);
+			fieldMapsCache.put(type,  map);
 		}
 		return map;
 	}
 
 
-	public static
-	boolean isPrimitive(Class<?> type) {
+	public static boolean isPrimitive(Class<?> type) {
 		return type.isPrimitive() || type.equals(String.class)
 				 || type.equals(Long.class) || type.equals(Integer.class) || type.equals(Short.class)
 				  || type.equals(Double.class) || type.equals(Float.class)
@@ -71,18 +72,18 @@ public class ReflectionHelper {
 	}
 
 
-	public static void checkParameter(Method method, int param, Field field, Class<?> paramType) throws JSONCodecException {
+	public static void checkParameter(Method method, int param, Field field, Class<?> paramType) throws JSONException {
 		Class<?>[] params = method.getParameterTypes();
 		if (params.length < param+1) {
-			throw new JSONCodecException(method.getDeclaringClass() + "." + method.getName() + "(): needs a " + param + ". parameter");
+			throw new JSONException(method.getDeclaringClass() + "." + method.getName() + "(): needs a " + param + ". parameter");
 		} else if (!params[param].equals(paramType)) {
-			throw new JSONCodecException(method.getDeclaringClass() + "." + method.getName() + "(): " + Integer.toString(param+1) + ". parameter must have type " + paramType.getSimpleName());
+			throw new JSONException(method.getDeclaringClass() + "." + method.getName() + "(): " + Integer.toString(param+1) + ". parameter must have type " + paramType.getSimpleName());
 		}
 
 	}
 
 
-	public static Method findMethod(Class<?> target, String methodName, Class<?>[] params) throws JSONCodecException {
+	public static Method findMethod(Class<?> target, String methodName, Class<?>[] params) throws JSONException {
 		Method method = null;
 		try {
 			/* try direct access to public methods with parameter types */
@@ -97,7 +98,7 @@ public class ReflectionHelper {
 			}
 		}
 		if (method == null) {
-			throw new JSONCodecException(target.getName() + '.' + methodName + "(): not found");
+			throw new JSONException(target.getName() + '.' + methodName + "(): not found");
 		}
 		return method;
 	}

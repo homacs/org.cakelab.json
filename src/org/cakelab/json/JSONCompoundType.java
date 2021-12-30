@@ -1,6 +1,6 @@
 package org.cakelab.json;
 
-import org.cakelab.json.codec.JSONStringFormatter;
+import org.cakelab.json.format.JSONFormatter;
 
 
 /**
@@ -12,9 +12,27 @@ import org.cakelab.json.codec.JSONStringFormatter;
 public interface JSONCompoundType {
 	/**
 	 * Convert to string using the default string formatter.
-	 * @see JSONStringFormatter
+	 * @see JSONFormatter
 	 * @return
 	 */
 	String toString();
-	String toString(JSONStringFormatter formatter);
+	String toString(JSONFormatter formatter) throws JSONException;
+
+	default double doublevalue(Object o) {
+		if (o instanceof Long) {
+			return (Long)o;
+		} else {
+			return (Double)o;
+		}
+	}
+
+	default long longvalue(Object o) {
+		if (o instanceof Long) {
+			return (Long)o;
+		} else {
+			return ((Double)o).longValue();
+		}
+
+	}
+
 }

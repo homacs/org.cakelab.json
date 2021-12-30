@@ -1,21 +1,24 @@
-package org.cakelab.json.parser.pojo;
+package org.cakelab.json.parser.basic;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
 import org.cakelab.json.JSONArray;
+import org.cakelab.json.JSONDefaults;
 import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
-import org.cakelab.json.parser.Parser;
+import org.cakelab.json.parser.JSONParser;
 
-/** Parser used by a JSONCodec to parse JSON strings. */
-public class POJOParser implements Parser {
+/** Parser used by a JSONCodec to parse JSON strings. 
+ * Called Java Parser because it is written in Java (not C).
+ */
+public class DefaultParser implements JSONParser {
 	
 	private Scanner scanner;
 	private boolean ignoreNull;
 	
-	public POJOParser(boolean ignoreNull) {
+	public DefaultParser(boolean ignoreNull) {
 		this.ignoreNull = ignoreNull;
 	}
 
@@ -38,7 +41,7 @@ public class POJOParser implements Parser {
 	}
 
 	public JSONObject parseObject(InputStream in) throws IOException, JSONException {
-		return parseObject(in, Charset.defaultCharset());
+		return parseObject(in, JSONDefaults.CHARSET);
 	}
 
 
@@ -58,7 +61,7 @@ public class POJOParser implements Parser {
 
 	@Override
 	public <T> T parse(InputStream in) throws IOException, JSONException {
-		return parse(in, Charset.defaultCharset());
+		return parse(in, JSONDefaults.CHARSET);
 	}
 
 

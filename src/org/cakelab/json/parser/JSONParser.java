@@ -7,8 +7,10 @@ import java.nio.charset.Charset;
 import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
 
-/** Parser used by a JSONCodec to parse JSON strings. */
-public interface Parser {
+/** A JSON Parser turns JSON strings into a JSON object tree. 
+ * 
+ * Can be created through {@link JSONParserFactory} */
+public interface JSONParser {
 	
 	/**
 	 * Explicitly expects a json object to be parsed.

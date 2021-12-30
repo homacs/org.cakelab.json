@@ -1,4 +1,4 @@
-package org.cakelab.json.codec.test;
+package org.cakelab.json.codec.samples;
 
 public enum SimpleEnum {
 	ONE,
