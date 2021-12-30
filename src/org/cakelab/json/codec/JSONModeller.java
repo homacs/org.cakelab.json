@@ -12,67 +12,114 @@ import org.cakelab.json.JSONArray;
 import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
 
-public class JSONModeller extends CodecBase {
+/**
+ * Turns Java object into JSONObject and vice versa.
+ * 
+ * @author homac
+ *
+ */
+public class JSONModeller {
+	
 	protected static final String SPECIAL_ATTRIBUTE_CLASS = "class";
 	protected ReflectionHelper reflectionHelper = new ReflectionHelper();
 	protected UnsafeAllocator allocator = UnsafeAllocator.create();
 
+	protected JSONCodecConfiguration cfg;
+
+	
 	public JSONModeller(JSONCodecConfiguration cfg) {
-		super(cfg);
+		this.cfg = new JSONCodecConfiguration(cfg);
 	}
-	
-	
-	public <T> T decodeObject(JSONObject jsonObject, Class<T> targetType) throws JSONException {
+
+	@SuppressWarnings("unchecked")
+	public <T> T toJavaObject(Object jsonAny, T targetObject) throws JSONException {
+		if (jsonAny instanceof JSONObject) {
+			Class<T> type = (Class<T>) targetObject.getClass();
+			if (type.isEnum()) {
+				return (T)json2enum((JSONObject)jsonAny, type);
+			} else {
+				return (T)json2object((JSONObject) jsonAny, targetObject);
+			}
+		} else if (jsonAny instanceof JSONArray) {
+			return (T)json2array((JSONArray) jsonAny, targetObject);
+		} else {
+			return (T)json2primitive(jsonAny, targetObject.getClass());
+		}
+	}
+
+
+	@SuppressWarnings("unchecked")
+	public <T> T toJavaObject(Object jsonAny, Class<T> targetType) throws JSONException {
 		try {
-			return _decodeObject(jsonObject, targetType);
+			if (jsonAny == null) return null;
+			if (jsonAny instanceof JSONObject) {
+				Class<? extends T> effectiveType = getDerivedType(jsonAny, targetType);
+				if (effectiveType.isEnum()) {
+					return (T) json2enum((JSONObject) jsonAny, effectiveType);
+				} else {
+					return (T) json2object((JSONObject) jsonAny, allocator.newInstance(effectiveType));
+				}
+			} else if (jsonAny instanceof JSONArray) {
+				return (T) json2array((JSONArray) jsonAny, Array.newInstance(targetType.getComponentType(), ((JSONArray) jsonAny).size()));
+			} else {
+				return (T) json2primitive(jsonAny, targetType);
+			}
 		} catch (InstantiationException e) {
 			throw new JSONException(e);
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	public <T> T decodeObject(JSONObject json, T targetObject) throws JSONException {
-		return (T) _decodeObject(json, targetObject);
+
+	/** Encodes the given object into a JSONObject, JSONArray 
+	 * or a JSON supported primitive type (incl. String), 
+	 * depending on the given object type.
+	 * @param o
+	 * @return
+	 * @throws JSONException 
+	 */
+	public Object toJSON(Object o) throws JSONException {
+		return toJSON(o, o.getClass());
 	}
 
-	
-	
-	Object _decodeObject(Object jsonAny, Object targetObject) throws JSONException {
-		if (jsonAny instanceof JSONObject) {
-			return json2object((JSONObject) jsonAny, targetObject);
-		} else if (jsonAny instanceof JSONArray) {
-			return json2array((JSONArray) jsonAny, targetObject);
-		} else {
-			return json2primitive(jsonAny.toString(), targetObject.getClass());
+	/** returns a JSONObject, JSONArray or primitive value (including String)
+	 * depending on the given object and reference type.
+	 * @param o Object to be encoded.
+	 * @param referenceType Class of the object or some subclass, in case you want just a particular subset of the members */
+	public Object toJSON(Object o, Class<?> referenceType) throws JSONException {
+		try {
+			Class<?> type = o.getClass();
+			
+			if (ReflectionHelper.isPrimitive(type)) {
+				return primitive2json(o);
+			} else if (type.isArray()) {
+				return array2json(o);
+			} else {
+				return object2json(o, referenceType);
+			}
+		} catch (JSONException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new JSONException(e);
 		}
 	}
 
 	@SuppressWarnings("unchecked")
-	<T> T _decodeObject(Object jsonAny, Class<T> targetType) throws JSONException, InstantiationException {
-		if (jsonAny == null) return null;
-		if (jsonAny instanceof JSONObject) {
-			if (cfg.supportClassAttribute) {
-				String clazz = ((JSONObject) jsonAny).getString(SPECIAL_ATTRIBUTE_CLASS);
-				if (clazz != null) {
-					try {
-						Class<?> derived = JSONCodec.class.getClassLoader().loadClass(clazz);
-						if (!ReflectionHelper.isSubclassOf(derived, targetType)) throw new JSONException("class " + clazz + " is not a subclass of " + targetType.getSimpleName());
-						else targetType = (Class<T>) derived;
-					} catch (ClassNotFoundException e) {
-						throw new JSONException(e);
-					}
+	private <T> Class<? extends T> getDerivedType(Object jsonAny, Class<T> targetType) throws JSONException {
+		if (cfg.supportClassAttribute) {
+			String clazz = ((JSONObject) jsonAny).getString(SPECIAL_ATTRIBUTE_CLASS);
+			if (clazz != null) {
+				try {
+					Class<?> derived = JSONCodec.class.getClassLoader().loadClass(clazz);
+					if (!ReflectionHelper.isSubclassOf(derived, targetType)) 
+						throw new JSONException("class " + clazz + " is not a subclass of " + targetType.getSimpleName());
+					else 
+						return (Class<? extends T>)derived;
+				} catch (ClassNotFoundException e) {
+					throw new JSONException(e);
 				}
 			}
-			if (targetType.isEnum()) {
-				return (T) json2enum((JSONObject) jsonAny, targetType);
-			} else {
-				return (T) json2object((JSONObject) jsonAny, allocator.newInstance(targetType));
-			}
-		} else if (jsonAny instanceof JSONArray) {
-			return (T) json2array((JSONArray) jsonAny, Array.newInstance(targetType.getComponentType(), ((JSONArray) jsonAny).size()));
-		} else {
-			return (T) json2primitive(jsonAny.toString(), targetType);
 		}
+		return targetType;
 	}
 
 	private Object json2object(JSONObject jsonObject, Object targetObject) throws JSONException {
@@ -87,16 +134,16 @@ public class JSONModeller extends CodecBase {
 					boolean accessible = field.isAccessible();
 					field.setAccessible(true);
 					if (ReflectionHelper.isPrimitive(field.getType())) {
-						field.set(targetObject, json2primitive(jsonField.getValue().toString(), field.getType()));
+						field.set(targetObject, json2primitive(jsonField.getValue(), field.getType()));
 					} else {
-						field.set(targetObject, _decodeObject(jsonField.getValue(), field.getType()));
+						field.set(targetObject, toJavaObject(jsonField.getValue(), field.getType()));
 					}
 					field.setAccessible(accessible);
 				} catch (NoSuchFieldException ex) {
 					if (!cfg.ignoreMissingFields) throw new JSONException(ex);
 				}
 			}
-		} catch (IllegalArgumentException | IllegalAccessException | InstantiationException e) {
+		} catch (IllegalArgumentException | IllegalAccessException e) {
 			throw new JSONException(e);
 		}
 		
@@ -118,81 +165,67 @@ public class JSONModeller extends CodecBase {
 	}
 
 	private Object json2array(JSONArray json, Object target) throws JSONException {
-		try {
-			for (int i = 0; i < json.size(); i++) {
-				Object jsonValue = json.get(i);
-				Object value;
-					value = _decodeObject(jsonValue, target.getClass().getComponentType());
-				Array.set(target, i, value);
-			}
-		} catch (InstantiationException e) {
-			throw new JSONException(e);
+		for (int i = 0; i < json.size(); i++) {
+			Object jsonValue = json.get(i);
+			Object value;
+				value = toJavaObject(jsonValue, target.getClass().getComponentType());
+			Array.set(target, i, value);
 		}
 		return target;
 	}
 
-	private Object json2primitive(String body, Class<?> type) {
+	private Object json2primitive(Object value, Class<?> type) {
 		if (type.equals(String.class)) {
-			return body;
-		} else if (type.equals(Character.class)) {
-			body = body.trim(); 
-			return (body.length() > 0) ? body.charAt(0) : null;
+			return (String)value;
+		} else if (type.equals(Character.class) || type.equals(char.class)) {
+			return (char)toLong(value);
 		} else if (type.equals(Long.class) || type.equals(long.class)) {
-			return Long.decode(body);
+			return toLong(value);
 		} else if (type.equals(Integer.class) || type.equals(int.class)) {
-			return Integer.decode(body);
+			return (int)toLong(value);
 		} else if (type.equals(Double.class) || type.equals(double.class)) {
-			return Double.parseDouble(body);
+			return toDouble(value);
 		} else if (type.equals(Float.class) || type.equals(float.class)) {
-			return Float.parseFloat(body);
+			return (float)toDouble(value);
 		} else if (type.equals(Short.class) || type.equals(short.class)) {
-			return Short.parseShort(body);
+			return (short)toLong(value);
 		} else if (type.equals(Byte.class) || type.equals(byte.class)) {
-			return Byte.parseByte(body);
+			return (byte)toLong(value);
 		} else if (type.equals(Boolean.class) || type.equals(boolean.class)) {
-			return Boolean.parseBoolean(body);
+			return (boolean)value;
 		}
 		return null;
 	}
-
-	/** returns a JSONObject, JSONArray or primitive value (including String)
-	 * depending on the given object and reference type.
-	 * @param o Object to be encoded.
-	 * @param referenceType Class of the object or some subclass, in case you want just a particular subset of the members */
-	public Object encodeObjectJSON(Object o, Class<?> referenceType) throws JSONException {
-		try {
-			// TODO: needs refactoring: see decodeObject(JSONObject) and decodeObject(String)
-		
-			Class<?> type = o.getClass();
-			
-			if (ReflectionHelper.isPrimitive(type)) {
-				return primitive2json(o);
-			} else if (type.isArray()) {
-				return array2json(o);
-			} else {
-				return object2json(o, referenceType);
-			}
-		} catch (JSONException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new JSONException(e);
-		}
+	
+	private long toLong(Object o) {
+		if (o instanceof Double) return (long)(double)o;
+		return (long)o;
 	}
 
-	/** Encodes the given object into a JSONObject, JSONArray 
-	 * or a JSON supported primitive type (incl. String), 
-	 * depending on the given object type.
-	 * @param o
-	 * @return
-	 * @throws JSONException 
-	 */
-	public Object encodeObjectJSON(Object o) throws JSONException {
-		return encodeObjectJSON(o, o.getClass());
+	private double toDouble(Object o) {
+		if (o instanceof Long) return (double)(long)o;
+		return (double)o;
 	}
+
 
 	
 	private Object primitive2json(Object o) {
-		return o;
+		if (o == null) {
+			return o;
+		} else if (o instanceof Byte) {
+			return (long)(byte)o;
+		} else if (o instanceof Character) {
+			return (long)(char)o;
+		} else if (o instanceof Short) {
+			return (long)(short)o;
+		} else if (o instanceof Integer) {
+			return (long)(int)o;
+		} else if (o instanceof Float) {
+			return (double)(float)o;
+		} else {
+			// long, double, boolean and String
+			return o;
+		}
 	}
 
 	private JSONObject object2json(Object o, Class<?> referenceType) throws JSONException, IllegalArgumentException, IllegalAccessException {
@@ -208,7 +241,7 @@ public class JSONModeller extends CodecBase {
 			if (value == null) {
 				if (!cfg.ignoreNull) json.put(field.getName(), null);
 			} else {
-				json.put(field.getName(), encodeObjectJSON(value, field.getType()));
+				json.put(field.getName(), toJSON(value, field.getType()));
 			}
 			field.setAccessible(accessible);
 		}
@@ -225,7 +258,7 @@ public class JSONModeller extends CodecBase {
 			if (value == null) {
 				if (!cfg.ignoreNull) json.add(null);
 			} else {
-				json.add(encodeObjectJSON(value, o.getClass().getComponentType()));
+				json.add(toJSON(value, o.getClass().getComponentType()));
 			}
 		}
 		return json;

@@ -22,11 +22,11 @@ import org.cakelab.json.parser.JSONParser;
  * @author homac
  *
  */
-public class JSONCodec extends CodecBase {
-	
+public class JSONCodec {
 
 	private JSONParser parser;
 	private JSONModeller modeller;
+	private JSONCodecConfiguration cfg;
 	
 	/**
 	 * Constructor using the default configuration.
@@ -40,10 +40,10 @@ public class JSONCodec extends CodecBase {
 	/** Constructor using a specific configuration.
 	 * @param config Configuration to be used by the codec.
 	 */
-	public JSONCodec(JSONCodecConfiguration config) {
-		super(config);
+	public JSONCodec(JSONCodecConfiguration cfg) {
+		this.cfg = cfg;
 		this.parser = cfg.parserFactory.create(cfg.ignoreNull);
-		this.modeller = new JSONModeller(config);
+		this.modeller = new JSONModeller(cfg);
 	}
 	
 	/** decodes the given json string into the given target object. 
@@ -51,7 +51,7 @@ public class JSONCodec extends CodecBase {
 	 */
 	public Object decodeObject(String jsonString, Object targetObject) throws JSONException {
 		JSONObject json = parser.parseObject(jsonString);
-		return modeller._decodeObject(json, targetObject);
+		return modeller.toJavaObject(json, targetObject);
 	}
 	
 	/** decodes the given json string from input stream into the given target object. 
@@ -59,7 +59,7 @@ public class JSONCodec extends CodecBase {
 	 */
 	public Object decodeObject(InputStream inputStream, Object targetObject) throws JSONException {
 		JSONObject json = parser.parseObject(inputStream, cfg.charset);
-		return modeller._decodeObject(json, targetObject);
+		return modeller.toJavaObject(json, targetObject);
 	}
 
 	
@@ -70,14 +70,13 @@ public class JSONCodec extends CodecBase {
 		try {
 			JSONObject json = parser.parseObject(inputStream, cfg.charset);
 			
-			return modeller._decodeObject(json, targetType);
+			return modeller.toJavaObject(json, targetType);
 		} catch (JSONException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new JSONException(e);
 		}
 	}
-
 
 	
 	/** decodes the given json string into an object of the given target type. 
@@ -89,7 +88,7 @@ public class JSONCodec extends CodecBase {
 			JSONParser parser = cfg.parserFactory.create(cfg.ignoreNull);
 			JSONObject jsonObject = parser.parseObject(jsonString);
 			
-			return modeller._decodeObject(jsonObject, targetType);
+			return modeller.toJavaObject(jsonObject, targetType);
 		} catch (JSONException e) {
 			throw e;
 		} catch (Exception e) {
@@ -118,7 +117,7 @@ public class JSONCodec extends CodecBase {
 		if (o instanceof JSONCompoundType) {
 			json = o;
 		} else {
-			json = modeller.encodeObjectJSON(o, null);
+			json = modeller.toJSON(o, null);
 		}
 		
 		cfg.formatter.format(out, json);

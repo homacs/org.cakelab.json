@@ -70,8 +70,6 @@ public abstract class JSONCodecTestSuite {
 	}
 
 
-
-
 	@Test
 	public void testArrayMembers() throws JSONException {
 		ArrayMembers o = new ArrayMembers();
@@ -79,8 +77,6 @@ public abstract class JSONCodecTestSuite {
 		ArrayMembers target = (ArrayMembers) codec.decodeObject(json, o.getClass());
 		assertEquals(json, codec.encodeObject(target));
 	}
-
-
 
 	@Test
 	public void testObjectInObject() throws JSONException {
@@ -90,8 +86,6 @@ public abstract class JSONCodecTestSuite {
 		ObjectInObject target = (ObjectInObject) codec.decodeObject(json, o.getClass());
 		assertEquals(json, codec.encodeObject(target));
 	}
-
-
 
 	@Test
 	public void testPrimitives() throws JSONException {
