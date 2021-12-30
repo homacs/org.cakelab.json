@@ -1,6 +1,5 @@
 package org.cakelab.json.perf;
 
-import java.io.IOException;
 import java.util.Random;
 import java.util.Stack;
 
@@ -31,7 +30,7 @@ public class ParserPerfBase {
 			System.out.println(factory.getClass().getSimpleName() + ": " + (double)(stop - start)/iterations + " ms/object");
 			System.out.println("probe: " + probe );
 			
-		} catch (IOException | JSONException e) {
+		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 	}

@@ -19,7 +19,7 @@ public interface JSONParser {
 	 * @throws IOException
 	 * @throws JSONException
 	 */
-	JSONObject parseObject(String jsonString) throws IOException, JSONException;
+	JSONObject parseObject(String jsonString) throws JSONException;
 	/**
 	 * Explicitly expects a json object to be parsed.
 	 * @param inputStream Stream with json input having default character encoding.
@@ -27,7 +27,7 @@ public interface JSONParser {
 	 * @throws IOException
 	 * @throws JSONException
 	 */
-	JSONObject parseObject(InputStream inputStream) throws IOException, JSONException;
+	JSONObject parseObject(InputStream inputStream) throws JSONException;
 	/**
 	 * Explicitly expects a json object to be parsed.
 	 * @param inputStream Stream with json input
@@ -36,7 +36,7 @@ public interface JSONParser {
 	 * @throws IOException
 	 * @throws JSONException
 	 */
-	JSONObject parseObject(InputStream inputStream, Charset charset) throws IOException, JSONException;
+	JSONObject parseObject(InputStream inputStream, Charset charset) throws JSONException;
 
 	/**
 	 * Parses any legal json element.
@@ -46,7 +46,7 @@ public interface JSONParser {
 	 * @throws IOException
 	 * @throws JSONException
 	 */
-	<T> T parse(String jsonString) throws IOException, JSONException;
+	<T> T parse(String jsonString) throws JSONException;
 	/**
 	 * Parses any legal json element.
 	 * @param <T> One of JSONObject, JSONArray, Double, Boolean, String or simply Object.
@@ -55,7 +55,7 @@ public interface JSONParser {
 	 * @throws IOException
 	 * @throws JSONException
 	 */
-	<T> T parse(InputStream inputStream) throws IOException, JSONException;
+	<T> T parse(InputStream inputStream) throws JSONException;
 	/**
 	 * Parses any legal json element.
 	 * @param <T> One of JSONObject, JSONArray, Double, Boolean, String or simply Object.
@@ -65,7 +65,7 @@ public interface JSONParser {
 	 * @throws IOException
 	 * @throws JSONException
 	 */
-	<T> T parse(InputStream inputStream, Charset charset) throws IOException, JSONException;
+	<T> T parse(InputStream inputStream, Charset charset) throws JSONException;
 
 
 }

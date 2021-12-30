@@ -22,48 +22,72 @@ public class DefaultParser implements JSONParser {
 		this.ignoreNull = ignoreNull;
 	}
 
-	private void setup(String jsonString) throws IOException {
-		scanner = new Scanner(jsonString);
-	}
-	
-	private void setup(InputStream in, Charset charset) throws IOException {
-		scanner = new Scanner(in, charset);
-	}
-
-	public JSONObject parseObject(String jsonString) throws IOException, JSONException {
-		setup(jsonString);
-		return parseJSONObject();
+	public JSONObject parseObject(String jsonString) throws JSONException {
+		try {
+			setup(jsonString);
+			return parseJSONObject();
+		} catch (IOException e) {
+			throw new JSONException(e);
+		} catch (JSONException e) {
+			throw e;
+		}
 	}
 
-	public JSONObject parseObject(InputStream in, Charset charset) throws IOException, JSONException {
-		setup(in, charset);
-		return parseJSONObject();
+	public JSONObject parseObject(InputStream in, Charset charset) throws JSONException {
+		try {
+			setup(in, charset);
+			return parseJSONObject();
+		} catch (IOException e) {
+			throw new JSONException(e);
+		} catch (JSONException e) {
+			throw e;
+		}
 	}
 
-	public JSONObject parseObject(InputStream in) throws IOException, JSONException {
+	public JSONObject parseObject(InputStream in) throws JSONException {
 		return parseObject(in, JSONDefaults.CHARSET);
 	}
 
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T parse(String jsonString) throws IOException, JSONException {
-		setup(jsonString);
-		return (T)parseValue();
+	public <T> T parse(String jsonString) throws JSONException {
+		try {
+			setup(jsonString);
+			return (T)parseValue();
+		} catch (IOException e) {
+			throw new JSONException(e);
+		} catch (JSONException e) {
+			throw e;
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T parse(InputStream in, Charset charset) throws IOException, JSONException {
-		setup(in, charset);
-		return (T)parseValue();
+	public <T> T parse(InputStream in, Charset charset) throws JSONException {
+		try {
+			setup(in, charset);
+			return (T)parseValue();
+		} catch (IOException e) {
+			throw new JSONException(e);
+		} catch (JSONException e) {
+			throw e;
+		}
 	}
 
 	@Override
-	public <T> T parse(InputStream in) throws IOException, JSONException {
+	public <T> T parse(InputStream in) throws JSONException {
 		return parse(in, JSONDefaults.CHARSET);
 	}
 
+
+	private void setup(String jsonString) throws JSONException, IOException {
+		scanner = new Scanner(jsonString);
+	}
+	
+	private void setup(InputStream in, Charset charset) throws JSONException, IOException {
+		scanner = new Scanner(in, charset);
+	}
 
 	private JSONObject parseJSONObject() throws IOException, JSONException {
 		JSONObject o = new JSONObject();
