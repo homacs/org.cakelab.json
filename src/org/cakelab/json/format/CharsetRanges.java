@@ -2,7 +2,6 @@ package org.cakelab.json.format;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
@@ -13,31 +12,24 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.cakelab.json.JSONException;
-import org.cakelab.json.parser.JSONParser;
 import org.cakelab.json.parser.basic.DefaultParser;
 
 public abstract class CharsetRanges {
 
 	private static class CharsetRangesImpl extends CharsetRanges {
-		int ranges[];
+		char ranges[];
 		int size;
 		int capacity;
 
-		CharsetRangesImpl(boolean valid) {
+		private CharsetRangesImpl(boolean valid) {
 			capacity = 0;
 			size = 0;
 			ranges = null;
 		}
 		
-		
-		CharsetRangesImpl() {
+		private CharsetRangesImpl() {
 			capacity = 8;
-			ranges = new int[capacity];
-		}
-
-		void add(char boundary) {
-			grow();
-			ranges[size++] = boundary;
+			ranges = new char[capacity];
 		}
 
 		
@@ -63,6 +55,11 @@ public abstract class CharsetRanges {
 			return s;
 		}
 
+		private void add(char boundary) {
+			grow();
+			ranges[size++] = boundary;
+		}
+
 		private boolean isValidRangeEndBoundary(int index) {
 			return (index % 2 == 1);
 		}
@@ -86,14 +83,65 @@ public abstract class CharsetRanges {
 	}
 
 
-	static class Builder {
+	private static class Builder {
+		
+		private static final int SET_SIZE_LIMIT = 15;
+
+		private static final boolean TEST_INTERNAL = false;
+		
+		private Charset charset;
+
 		private CharsetEncoder encoder;
 		private CharsetDecoder decoder;
 		private CharBuffer charBuffer;
 		private ByteBuffer byteBuffer;
 
+		private DefaultParser parser;
+		private JSONFormatterPlain formatter;
+
+		private CharsetRangesImpl ranges;
+
 		public Builder(Charset charset) {
+			this.charset = charset;
+			setupEncoderDecoder();
 			
+			if(TEST_INTERNAL) {
+				parser = new DefaultParser(false);
+				setupFormatter();
+			}
+			
+			ranges = new CharsetRangesImpl();
+		}
+		
+
+		public CharsetRanges build() throws UnsupportedCharsetException {
+			boolean validRange = true;
+			char begin = 0;
+			
+			ranges.add(begin);
+			
+			for (int i = '\0' + 1; i <= 0xFFFF; i++) {
+				char c = toChar(i);
+				validRange = evaluate(c, validRange);
+			}
+
+			return ranges;
+		}
+		
+		private void setupFormatter() {
+			try {
+				JSONFormatterConfiguration cfg = new JSONFormatterConfiguration()
+						.charset(charset)
+						.unicodeValues(false);
+				formatter = new JSONFormatterPlain(cfg);
+			} catch (JSONException e) {
+				// formatter is not supposed to throw an exception
+				// if cfg.unicodeValues is false.
+				throw new RuntimeException("internal error: ", e);
+			}
+		}
+
+		private void setupEncoderDecoder() {
 			boolean encoderAvailable = charset.canEncode();
 			encoder = null;
 			decoder = null;
@@ -113,68 +161,41 @@ public abstract class CharsetRanges {
 				throw new UnsupportedCharsetException(charset.name());
 			}
 		}
-		
-		public CharsetRanges build(Charset charset) throws UnsupportedCharsetException {
 
-			JSONParser parser = new DefaultParser(false);
-
-			JSONFormatter formatter;
-			try {
-				JSONFormatterConfiguration cfg = new JSONFormatterConfiguration()
-						.charset(charset)
-						.unicodeValues(false);
-				formatter = new JSONFormatterPlain(cfg);
-			} catch (JSONException e) {
-				throw new RuntimeException("internal error: ", e);
-			}
-
-			CharsetRangesImpl rangeSet = new CharsetRangesImpl();
-
-			boolean validRange = true;
-			int i = '\0' + 1;
-			char begin = 0;
-			rangeSet.add(begin);
-			for (; i <= 0xFFFF; i++) {
-				char c = toChar(i);
-				String strValue = String.valueOf(c);
-				String resultString = "ERROR";
-				if (canEncodeDecode(c)) {
-					try {
-						String jsonString = formatter.format(strValue);
-						resultString = parser.parse(jsonString);
-					} catch (Throwable e) {
+		private boolean evaluate(char c, boolean validRange) {
+			if (canEncodeDecode(c)) {
+				if (!validRange) {
+					if (ranges.size() > SET_SIZE_LIMIT) {
+						throw new UnsupportedCharsetException(charset.name());
 					}
+					ranges.add(c);
+					return true;
 				}
-				if (strValue.equals(resultString)) {
-					if (!validRange) {
-						if (rangeSet.size() > 31) {
-							throw new UnsupportedCharsetException(charset.name());
-						}
-						rangeSet.add(c);
-						validRange = true;
-					}
-				} else {
-					if (validRange) {
-						rangeSet.add(c);
-						validRange = false;
-					}
+			} else {
+				if (validRange) {
+					ranges.add(c);
+					return false;
 				}
 			}
-
-			return rangeSet;
+			return validRange;
 		}
 
-		/**
-		 * tests if provided encoder and decoder properly work for the given character
-		 * 
-		 * @throws CharacterCodingException
-		 */
 		private boolean canEncodeDecode(char c) {
 			try {
-				return c == encodeDecode(c);
+				if (c == encodeDecode(c)) {
+					if (TEST_INTERNAL) {
+						String strValue = String.valueOf(c);
+						String jsonString = formatter.format(strValue);
+						String resultString = parser.parse(jsonString);
+						return strValue.equals(resultString);
+					} else {
+						return true;
+					}
+				}
 			} catch (Throwable e) {
-				return false;
+				// intentionally empty
 			}
+			return false;
 		}
 
 		private char encodeDecode(char c) throws JSONException {
@@ -200,9 +221,9 @@ public abstract class CharsetRanges {
 			return charBuffer.get(0);
 		}
 		
-		
-	}
+	} // end of class Builder
 
+	
 	public abstract int size();
 	public abstract boolean empty();
 	public abstract boolean valid(char c);
@@ -215,17 +236,17 @@ public abstract class CharsetRanges {
 		FULL_RANGE = impl;
 	}
 	
-	static final CharsetRanges NOT_SUPPORTED = new CharsetRangesImpl(false);
+	private static final CharsetRanges NOT_SUPPORTED = new CharsetRangesImpl(false);
 	
 	
-	private static Map<Charset, CharsetRanges> sets = new ConcurrentHashMap<>();
+	private static Map<Charset, CharsetRanges> cache = new ConcurrentHashMap<>();
 	
 	
 	public static CharsetRanges get(Charset charset) throws JSONException {
-		CharsetRanges result = sets.get(charset);
+		CharsetRanges result = cache.get(charset);
 		if (result == null) {
 			result = build(charset);
-			sets.put(charset, result);
+			cache.put(charset, result);
 		}
 		if (result == NOT_SUPPORTED) throw new JSONException("character encoding not supported: " + charset.name());
 		return result;
@@ -234,7 +255,7 @@ public abstract class CharsetRanges {
 	public static CharsetRanges build(Charset charset) {
 		try {
 			Builder builder = new Builder(charset);
-			return builder.build(charset);
+			return builder.build();
 		} catch (UnsupportedCharsetException e) {
 			return NOT_SUPPORTED;
 		}
