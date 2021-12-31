@@ -4,4 +4,6 @@ public enum SimpleEnum {
 	ONE,
 	TWO,
 	THREE
+	
+	
 }

@@ -1,5 +1,6 @@
 package org.cakelab.json.codec;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.cakelab.json.JSONException;
@@ -21,14 +22,8 @@ public abstract class JSONCodecTestSuite {
 	@Test
 	public void testEnum() throws JSONException {
 		SimpleEnum expected = SimpleEnum.TWO;
-		
 		JSONCodec codec = new JSONCodec(new JSONCodecConfiguration().supportClassAttribute(true));
-		
-		String encoded = codec.encodeObject(expected);
-		
-		SimpleEnum value = codec.decodeObject(encoded, SimpleEnum.class);
-		
-		assertEquals(expected, value);
+		assertEncodeDecode(expected, codec);
 	}
 	
 	@Test
@@ -39,10 +34,7 @@ public abstract class JSONCodecTestSuite {
 
 	
 		JSONCodec codec = new JSONCodec(new JSONCodecConfiguration());
-		
 		String encoded = codec.encodeObject(ts);
-		
-		
 		ts = (SampleString) codec.decodeObject(encoded, SampleString.class);
 		
 		assertEquals(expected, ts.getS());
@@ -73,27 +65,39 @@ public abstract class JSONCodecTestSuite {
 	@Test
 	public void testArrayMembers() throws JSONException {
 		ArrayMembers o = new ArrayMembers();
-		String json = codec.encodeObject(o);
-		ArrayMembers target = (ArrayMembers) codec.decodeObject(json, o.getClass());
-		assertEquals(json, codec.encodeObject(target));
+		assertEncodeDecode(o);
 	}
 
 	@Test
 	public void testObjectInObject() throws JSONException {
 		ObjectInObject o = new ObjectInObject();
-
-		String json = codec.encodeObject(o);
-		ObjectInObject target = (ObjectInObject) codec.decodeObject(json, o.getClass());
-		assertEquals(json, codec.encodeObject(target));
+		assertEncodeDecode(o);
 	}
 
 	@Test
 	public void testPrimitives() throws JSONException {
 		Primitives o = new Primitives();
+		assertEncodeDecode(o);
+	}
 
+	protected void assertEncodeDecode(Object o) throws JSONException {
+		assertEncodeDecode(o, codec);
+	}
+
+
+	protected void assertEncodeDecode(Object o, JSONCodec codec) throws JSONException {
 		String json = codec.encodeObject(o);
-		Primitives target = (Primitives) codec.decodeObject(json, o.getClass());
+
+		// encode to new
+		Object target = codec.decodeObject(json, o.getClass());
 		assertEquals(json, codec.encodeObject(target));
+		assertEquals(o, target);
+		
+		// encode to existing
+		Object inplaceTarget = codec.decodeObject(json, target);
+		assertTrue(inplaceTarget == target);
+		assertEquals(json, codec.encodeObject(target));
+		assertEquals(o, target);
 	}
 
 

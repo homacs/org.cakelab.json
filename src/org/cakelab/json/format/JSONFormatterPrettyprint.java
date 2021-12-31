@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.cakelab.json.JSONArray;
+import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
 
 public class JSONFormatterPrettyprint extends JSONFormatterBase implements JSONFormatter {
@@ -17,7 +18,7 @@ public class JSONFormatterPrettyprint extends JSONFormatterBase implements JSONF
 	private String currentIndentStr = "";
 
 	
-	public JSONFormatterPrettyprint(JSONFormatterConfiguration format) {
+	public JSONFormatterPrettyprint(JSONFormatterConfiguration format) throws JSONException {
 		super(format);
 	}
 
@@ -39,7 +40,7 @@ public class JSONFormatterPrettyprint extends JSONFormatterBase implements JSONF
 	}
 
 	@Override
-	protected void append(PrintStream pout, JSONArray jsonArray) {
+	protected void append(PrintStream pout, JSONArray jsonArray) throws JSONException {
 		pout.print("[");
 		if (!jsonArray.isEmpty()) {
 			appendNewLine(pout);
@@ -60,7 +61,7 @@ public class JSONFormatterPrettyprint extends JSONFormatterBase implements JSONF
 		pout.print("]");	}
 
 	@Override
-	protected void append(PrintStream pout, JSONObject jsonObject) {
+	protected void append(PrintStream pout, JSONObject jsonObject) throws JSONException {
 		pout.print("{");
 		enterScope();
 		appendNewLine(pout);

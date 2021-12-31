@@ -5,18 +5,19 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.cakelab.json.JSONArray;
+import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
 
 public class JSONFormatterPlain extends JSONFormatterBase implements JSONFormatter {
 
 	
-	public JSONFormatterPlain(JSONFormatterConfiguration cfg) {
+	public JSONFormatterPlain(JSONFormatterConfiguration cfg) throws JSONException {
 		super(cfg);
 	}
 
 
 	@Override
-	protected void append(PrintStream pout, JSONArray jsonArray) {
+	protected void append(PrintStream pout, JSONArray jsonArray) throws JSONException {
 		pout.print("[");
 		if (!jsonArray.isEmpty()) {
 			int i = 0;
@@ -30,7 +31,7 @@ public class JSONFormatterPlain extends JSONFormatterBase implements JSONFormatt
 	}
 
 	@Override
-	protected void append(PrintStream pout, JSONObject jsonObject) {
+	protected void append(PrintStream pout, JSONObject jsonObject) throws JSONException {
 		pout.print("{");
 		
 		Iterator<Entry<String, Object>> it = iterator(jsonObject.entrySet());

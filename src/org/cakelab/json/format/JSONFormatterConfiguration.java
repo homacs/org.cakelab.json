@@ -1,6 +1,9 @@
 package org.cakelab.json.format;
 
-import static org.cakelab.json.JSONDefaults.*;
+import static org.cakelab.json.JSONDefaults.CHARSET;
+import static org.cakelab.json.JSONDefaults.FORMATTER_SORT_MEMBERS;
+import static org.cakelab.json.JSONDefaults.FORMATTER_UNICODE_VALUES;
+
 import java.nio.charset.Charset;
 
 /**
@@ -19,6 +22,8 @@ public class JSONFormatterConfiguration {
 	
 	/** Uses unicode conform encoding of special characters (i.e. &#92;u&lt;UNICODE_NUMBER&gt;) 
 	 * when converting objects into strings. 
+	 * This is especially required for character encodings, with limited 
+	 * range such as ISO-8859 (has just 8bits).
 	 * <p><b>Default:</b> <em>true</em></p>*/
 	public final boolean unicodeValues;
 	

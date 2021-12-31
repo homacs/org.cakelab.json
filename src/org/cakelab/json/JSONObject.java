@@ -39,5 +39,7 @@ public class JSONObject extends HashMap<String, Object> implements JSONCompoundT
 	public String getString(String key) {
 		return (String)get(key);
 	}
+	
+	
 
 }

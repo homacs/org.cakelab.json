@@ -1,5 +1,6 @@
 package org.cakelab.json.parser;
 
+import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -10,47 +11,41 @@ import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
 import org.cakelab.json.format.JSONFormatter;
 import org.cakelab.json.format.JSONFormatterConfiguration;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public abstract class JSONParserTestSuite {
 
-	protected static JSONParserFactory parserFactory;
-	protected static JSONFormatter formatterFactory;
+	protected static JSONParser parser;
+	protected static JSONFormatter formatter;
 	protected static JSONFormatterConfiguration formatterConfig;
 	
 	@Test
 	public void testObject() throws Throwable {
-		test("{}", "toplevel object", true);
-		test("{ \t\n}   \r\f", "whitespaces", true);
-		test("{ \"empty\" : }", "empty value", false);
-		test("{ \"exists\" : 1 , }", "missing NV pair", false);
-		test("{ \"null\" : null}", "null parse test", true);
-		test("{ \"true\" : true, \"false\" : false}", "boolean", true);
-		test("{ \"one\" : 1, \"two\" : 2, \"_three\" : 3, \"four_4\" : 4 }", "legal names", true);
-		test("{ \"1ins\" : 1", "illegal name", false);
-		test("{ \"array\" : [] }", "empty array", true);
-		test("{ \"array\" : [,] }", "empty array elements", false);
-		test("{ \"array\" : [d,t] }", "illegal array elements", false);
-		test("{ \"eins\" : { \"zwei\" : {}}, \"drei\" : {} }", "nested objects", true);
+		testPassFail(true,  "{}", "toplevel object");
+		testPassFail(true,  "{ \t\n}   \r\f", "whitespaces");
+		testPassFail(false, "{ \"empty\" : }", "empty value");
+		testPassFail(false, "{ \"exists\" : 1 , }", "missing NV pair");
+		testPassFail(true,  "{ \"null\" : null}", "null parse test");
+		testPassFail(true,  "{ \"true\" : true, \"false\" : false}", "boolean");
+		testPassFail(true,  "{ \"one\" : 1, \"two\" : 2, \"_three\" : 3, \"four_4\" : 4 }", "legal names");
+		testPassFail(false, "{ \"1ins\" : 1", "illegal name");
+		testPassFail(true,  "{ \"array\" : [] }", "empty array");
+		testPassFail(false, "{ \"array\" : [,] }", "empty array elements");
+		testPassFail(false, "{ \"array\" : [d,t] }", "illegal array elements");
+		testPassFail(true,  "{ \"eins\" : { \"zwei\" : {}}, \"drei\" : {} }", "nested objects");
 	}
 	
 	@Test
 	public void testValues() throws IOException, JSONException {
-		testValue(1.0);
-		testValue(true);
-		testValue(false);
-		testValue(null);
+		testPrimitiveValue("String");
+		testPrimitiveValue(1.0);
+		testPrimitiveValue(2L);
+		testPrimitiveValue(true);
+		testPrimitiveValue(false);
+		testPrimitiveValue(null);
 	}
 	
 	
-	private void testValue(Object expect) throws IOException, JSONException {
-		JSONParser p = parserFactory.create();
-		Object value = p.parse(String.valueOf(expect));
-		assertTrue(expect == value || expect.equals(value));
-	}
-
-
 	@Test
 	public void testComplexObject() throws IOException, JSONException {
 		String jsonString = "{"
@@ -63,10 +58,10 @@ public abstract class JSONParserTestSuite {
 				+ "\"nv2\": 2 \n" 
 				+ "}";
 		
-		JSONParser p = parserFactory.create();
+		JSONParser p = parser;
 		JSONObject o = p.parseObject(jsonString);
 		
-		p = parserFactory.create();
+		p = parser;
 		o = p.parseObject(o.toString());
 		
 		o.toString();
@@ -114,11 +109,9 @@ public abstract class JSONParserTestSuite {
 				+ "\"url\": \""+ url + "\" \n" 
 				+ "}";
 
-		JSONParser p = parserFactory.create();
-		
-		JSONObject o = p.parseObject(jsonString);
-		p = parserFactory.create();
-		o = p.parseObject(o.toString());
+	
+		JSONObject o = parser.parseObject(jsonString);
+		o = parser.parseObject(o.toString());
 		
 		assert(((String) o.get("empty")).equals(""));
 		assert(((String) o.get("common")).equals(common));
@@ -140,11 +133,9 @@ public abstract class JSONParserTestSuite {
 				+ "\"n7\": " + n7 + "\n"
 				+ "}";
 
-		JSONParser p = parserFactory.create();
 		
-		JSONObject o = p.parseObject(jsonString);
-		p = parserFactory.create();
-		o = p.parseObject(o.toString());
+		JSONObject o = parser.parseObject(jsonString);
+		o = parser.parseObject(o.toString());
 		
 		assertEquals(o.getDouble("n1"), Double.MIN_VALUE);
 		assertEquals(o.getDouble("n2"), Double.MAX_VALUE);
@@ -155,19 +146,40 @@ public abstract class JSONParserTestSuite {
 		assertEquals(o.getDouble("n7"), n7);
 	}
 
-	protected void test(String jsonString, String name, boolean expectedSuccess) throws Throwable {
+	@Test
+	public void testUtf8 () throws JSONException {
+
+		testPrimitiveValue("\u0001");
+		testPrimitiveValue("\u0010");
+		testPrimitiveValue("\u0100");
+		testPrimitiveValue("\u1000");
+		testPrimitiveValue("äÄöÖüÜß²³'áéúíàèùì");
+	}
+	
+	
+	protected void testPassFail(boolean expectSuccess, String jsonString, String name)  {
 		try {
-			JSONParser p = parserFactory.create();
-			
-			JSONObject o = p.parseObject(jsonString);
+			JSONObject jsonObject = parser.parseObject(jsonString);
+			String jsonString2 = formatter.format(jsonObject);
 			// reverse test
-			p = parserFactory.create();
-			o = p.parseObject(o.toString(formatterFactory));
-			if (!expectedSuccess) Assertions.fail();
-		} catch (Throwable t) {
-			if (expectedSuccess) throw t;
+			jsonObject = parser.parseObject(jsonString2);
+			if (!expectSuccess) fail(name + ": expected to fail");
+		} catch (JSONException t) {
+			if (expectSuccess) fail(name + ": expected to succeed");
 		}
 	}
 
+	/** expect can be one of the supported primitive types:
+	 * Boolean (true|false)
+	 * Double
+	 * Long
+	 * String
+	 * null
+	 */
+	private void testPrimitiveValue(Object expect) throws JSONException {
+		String jsonString = formatter.format(expect);
+		Object value = parser.parse(jsonString);
+		assertTrue(expect == value || expect.equals(value));
+	}
 	
 }

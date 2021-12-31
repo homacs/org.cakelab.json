@@ -28,5 +28,6 @@ public interface JSONFormatter {
 	void format(OutputStream out, JSONArray jsonArray) throws JSONException;
 	void format(OutputStream out, JSONCompoundType jsonCompound) throws JSONException;
 	void format(OutputStream out, Object jsonValue) throws JSONException;
+
 	
 }

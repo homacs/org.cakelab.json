@@ -11,15 +11,23 @@ import org.cakelab.json.parser.JSONParser;
 import org.cakelab.json.parser.JSONParserFactory;
 import org.cakelab.json.parser.basic.DefaultParserFactory;
 
-public interface JSONDefaults {
+public class JSONDefaults {
 
 	public static final Charset CHARSET = StandardCharsets.UTF_8;
 	public static final boolean FORMATTER_SORT_MEMBERS = true;
 	public static final boolean FORMATTER_UNICODE_VALUES = true;
 	
 	public static final JSONFormatterConfiguration FORMATTER_CONFIG = new JSONFormatterConfiguration(CHARSET, FORMATTER_SORT_MEMBERS, FORMATTER_UNICODE_VALUES);
-	public static final JSONFormatter FORMATTER = new JSONFormatterPrettyprint(FORMATTER_CONFIG);
-
+	public static final JSONFormatter FORMATTER;
+	static {
+		try {
+			FORMATTER = new JSONFormatterPrettyprint(FORMATTER_CONFIG);
+		} catch (JSONException e) {
+			// default character encoding (UTF8) will not cause this to happen.
+			throw new RuntimeException(e);
+		}
+	}
+	
 	public static final JSONParserFactory PARSER_FACTORY = new DefaultParserFactory();
 
 	public static final boolean CODEC_IGNORE_NULL = false;

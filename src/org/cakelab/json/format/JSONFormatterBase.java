@@ -11,8 +11,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.cakelab.json.JSONArray;
 import org.cakelab.json.JSONCompoundType;
@@ -29,13 +29,22 @@ public abstract class JSONFormatterBase implements JSONFormatter {
 	};
 	
 	protected final JSONFormatterConfiguration cfg;
-
+	private final CharsetRanges encodingRanges;
 	
 	
-	protected JSONFormatterBase(JSONFormatterConfiguration cfg) {
+	protected JSONFormatterBase(JSONFormatterConfiguration cfg) throws JSONException {
 		this.cfg = new JSONFormatterConfiguration(cfg);
+		encodingRanges = setupEncodingRange();
 	}
 	
+	
+	CharsetRanges setupEncodingRange() throws JSONException {
+		if (!cfg.unicodeValues) 
+			return CharsetRanges.FULL_RANGE;
+
+		return CharsetRanges.get(cfg.charset);
+	}
+
 	
 	@Override
 	public JSONFormatterConfiguration getConfiguration() {
@@ -104,14 +113,14 @@ public abstract class JSONFormatterBase implements JSONFormatter {
 	}
 
 	
-	protected abstract void append(PrintStream pout, JSONArray o);
-	protected abstract void append(PrintStream pout, JSONObject o);
+	protected abstract void append(PrintStream pout, JSONArray o) throws JSONException;
+	protected abstract void append(PrintStream pout, JSONObject o) throws JSONException;
 	
 	protected void appendPrimitiveValue(PrintStream pout, Object primitiveValue) {
 		pout.print(primitiveValue.toString());
 	}
 
-	protected void appendAny(PrintStream pout, Object anyJsonValue) {
+	protected void appendAny(PrintStream pout, Object anyJsonValue) throws JSONException {
 		if (anyJsonValue == null) {
 			pout.print("null");
 		} else if (anyJsonValue instanceof String) {
@@ -133,21 +142,24 @@ public abstract class JSONFormatterBase implements JSONFormatter {
 		pout.print("\n");
 	}
 
-	protected void appendUnicodeString(PrintStream pout, String str) {
+	protected void appendUnicodeString(PrintStream pout, String str) throws JSONException {
 		StringReader reader = new StringReader(str);
 		int read;
 		try {
+			// read one character at a time
 			while ((read = reader.read()) > 0) {
-				// TODO: support full utf8 character range.
-				if (Character.isSupplementaryCodePoint(read)) throw new Error("Supplimentary code points (extended unicode) are not supported by JSON");
 				appendUnicodeCharacter(pout, (char)read);
 			}
-		} catch (Throwable e) {
-			throw new Error(e);
+		} catch (JSONException e) {
+			throw e;
+		} catch (IOException e) {
+			throw new JSONException(e);
 		}
 	}
 
-	protected void appendUnicodeCharacter(PrintStream pout, char c) {
+	protected void appendUnicodeCharacter(PrintStream pout, char c) throws JSONException {
+		if (Character.isSupplementaryCodePoint(c)) 
+			throw new JSONException("Supplimentary code points are not supported by JSON");
 		switch (c) {
 		case '\"':
 			pout.print("\\\"");
@@ -171,11 +183,10 @@ public abstract class JSONFormatterBase implements JSONFormatter {
 			pout.print("\\t");
 			break;
 		default:
-			if (cfg.unicodeValues && isNonAscii(c)) {
+			if (exceedsEncodingRange(c)) {
 				pout.print("\\u");
-				// TODO: comp: support encoding of control characters (0 - 20) too.
-				// NOTE: currently we support conversion for single byte Unicode characters only, 
-				//       and those can be mapped directly to code points, the way we do it here.
+				// Unicode codepoints are similar to character 
+				// values in UCS2 (JVM character encoding).
 				String s = Integer.toHexString(c);
 				// add missing leading zeros
 				for (int i = s.length(); i < 4 ; i++) pout.print('0');
@@ -187,8 +198,8 @@ public abstract class JSONFormatterBase implements JSONFormatter {
 		}
 	}
 
-	protected static boolean isNonAscii(char c) {
-		return c > 127;
+	protected boolean exceedsEncodingRange(char c) {
+		return !encodingRanges.valid(c);
 	}
 	
 	protected Iterator<Entry<String, Object>> iterator(Set<Entry<String, Object>> entrySet) {
