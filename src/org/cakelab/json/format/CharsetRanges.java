@@ -21,17 +21,10 @@ public abstract class CharsetRanges {
 		int size;
 		int capacity;
 
-		private CharsetRangesImpl(boolean valid) {
-			capacity = 0;
-			size = 0;
-			ranges = null;
-		}
-		
 		private CharsetRangesImpl() {
 			capacity = 8;
 			ranges = new char[capacity];
 		}
-
 		
 		public boolean valid(char c) {
 			// a range set with zero ranges is not supported
@@ -229,15 +222,23 @@ public abstract class CharsetRanges {
 	public abstract boolean valid(char c);
 	
 	
-	static final CharsetRanges FULL_RANGE;
-	static {
-		CharsetRangesImpl impl = new CharsetRangesImpl();
-		impl.add(toChar(0));
-		FULL_RANGE = impl;
-	}
+	static final CharsetRanges FULL_RANGE = new CharsetRanges() {
+		@Override
+		public int size() {return 1;}
+		@Override
+		public boolean empty() {return false;}
+		@Override
+		public boolean valid(char c) {return true;}
+	};
 	
-	private static final CharsetRanges NOT_SUPPORTED = new CharsetRangesImpl(false);
-	
+	private static final CharsetRanges NOT_SUPPORTED = new CharsetRanges() {
+		@Override
+		public int size() {return 0;}
+		@Override
+		public boolean empty() {return true;}
+		@Override
+		public boolean valid(char c) {return false;}
+	};
 	
 	private static Map<Charset, CharsetRanges> cache = new ConcurrentHashMap<>();
 	

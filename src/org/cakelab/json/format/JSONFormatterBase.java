@@ -38,7 +38,7 @@ public abstract class JSONFormatterBase implements JSONFormatter {
 	}
 	
 	
-	CharsetRanges setupEncodingRange() throws JSONException {
+	private CharsetRanges setupEncodingRange() throws JSONException {
 		if (!cfg.unicodeValues) 
 			return CharsetRanges.FULL_RANGE;
 
