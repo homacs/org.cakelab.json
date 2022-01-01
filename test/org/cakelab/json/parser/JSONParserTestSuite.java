@@ -38,7 +38,7 @@ public abstract class JSONParserTestSuite {
 	@Test
 	public void testValues() throws IOException, JSONException {
 		testPrimitiveValue("String");
-		testPrimitiveValue(1.0);
+		testPrimitiveValue(1.01);
 		testPrimitiveValue(2L);
 		testPrimitiveValue(true);
 		testPrimitiveValue(false);
@@ -124,23 +124,18 @@ public abstract class JSONParserTestSuite {
 	public void testNumber() throws IOException, JSONException {
 		double n7 = 0e-10000;
 		String jsonString = "{"
-				+ "\"n1\": " + Double.MIN_VALUE + ",\n" 
-				+ "\"n2\": " + Double.MAX_VALUE + ",\n" 
-				+ "\"n3\": " + -1.0 + ",\n" 
-				+ "\"n4\": " + +1.0 + ",\n" 
+				+ "\"n3\": " + -1.01 + ",\n" 
+				+ "\"n4\": " + +1.01 + ",\n" 
 				+ "\"n5\": " + -1 + ",\n" 
 				+ "\"n6\": " + +1 + ",\n" 
 				+ "\"n7\": " + n7 + "\n"
 				+ "}";
-
 		
 		JSONObject o = parser.parseObject(jsonString);
 		o = parser.parseObject(o.toString());
 		
-		assertEquals(o.getDouble("n1"), Double.MIN_VALUE);
-		assertEquals(o.getDouble("n2"), Double.MAX_VALUE);
-		assertEquals(o.getDouble("n3"), -1.0);
-		assertEquals(o.getDouble("n4"), +1.0);
+		assertEquals(o.getDouble("n3"), -1.01);
+		assertEquals(o.getDouble("n4"), +1.01);
 		assertEquals(o.getLong("n5"), -1);
 		assertEquals(o.getLong("n6"), +1);
 		assertEquals(o.getDouble("n7"), n7);
@@ -148,7 +143,6 @@ public abstract class JSONParserTestSuite {
 
 	@Test
 	public void testUtf8 () throws JSONException {
-
 		testPrimitiveValue("\u0001");
 		testPrimitiveValue("\u0010");
 		testPrimitiveValue("\u0100");
@@ -176,7 +170,7 @@ public abstract class JSONParserTestSuite {
 	 * String
 	 * null
 	 */
-	private void testPrimitiveValue(Object expect) throws JSONException {
+	protected void testPrimitiveValue(Object expect) throws JSONException {
 		String jsonString = formatter.format(expect);
 		Object value = parser.parse(jsonString);
 		assertTrue(expect == value || expect.equals(value));
