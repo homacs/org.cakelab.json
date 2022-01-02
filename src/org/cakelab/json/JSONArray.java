@@ -11,11 +11,6 @@ public class JSONArray extends ArrayList<Object> implements JSONCompoundType {
 
 	
 	@Override
-	public boolean add(Object o) {
-		return super.add(o);
-	}
-	
-	@Override
 	public String toString() {
 		try {
 			return toString(JSONDefaults.FORMATTER);
@@ -29,12 +24,53 @@ public class JSONArray extends ArrayList<Object> implements JSONCompoundType {
 		return formatter.format(this);
 	}
 
-	public double getDouble(int index) {
+	
+	public JSONObject getObject(int index) {
+		return objectvalue(get(index));
+	}
+	
+	public JSONObject getObject(int index, JSONObject defaultValue) {
+		return objectvalue(get(index), defaultValue);
+	}
+
+	public JSONArray getArray(int index) {
+		return arrayvalue(get(index));
+	}
+	
+	public JSONArray getArray(int index, JSONArray defaultValue) {
+		return arrayvalue(get(index), defaultValue);
+	}
+	
+	public String getString(int index) {
+		return stringvalue(get(index));
+	}
+	
+	public String getString(int index, String defaultValue) {
+		return stringvalue(get(index), defaultValue);
+	}
+	
+	public Double getDouble(int index) {
 		return doublevalue(get(index));
 	}
 
-	public long getLong(int index) {
+	public Double getDouble(int index, Double defaultValue) {
+		return doublevalue(get(index), defaultValue);
+	}
+
+	public Long getLong(int index) {
 		return longvalue(get(index));
+	}
+	
+	public Long getLong(int index, Long defaultValue) {
+		return longvalue(get(index), defaultValue);
+	}
+	
+	public Boolean getBoolean(int index) {
+		return booleanvalue(get(index));
+	}
+
+	public Boolean getBoolean(int index, Boolean defaultValue) {
+		return booleanvalue(get(index), defaultValue);
 	}
 
 	

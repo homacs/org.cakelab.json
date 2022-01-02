@@ -19,8 +19,42 @@ import org.cakelab.json.JSONCompoundType;
 import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
 
-public abstract class JSONFormatterBase implements JSONFormatter {
+public abstract class JSONFormatterBase<T extends PrintStream> implements JSONFormatter {
 	
+	/** used when ignoring null entries in JSON objects */
+	public static class IgnoringNullIterator implements Iterator<Entry<String, Object>> {
+
+		private Iterator<Entry<String, Object>> iterator;
+		private Entry<String, Object> next;
+
+		public IgnoringNullIterator(Iterator<Entry<String, Object>> iterator) {
+			this.iterator = iterator;
+			this.next = _next();
+		}
+
+		@Override
+		public boolean hasNext() {
+			return next != null;
+		}
+
+		@Override
+		public Entry<String, Object> next() {
+			Entry<String, Object> n = next;
+			this.next = _next();
+			return n;
+		}
+		
+		public Entry<String, Object> _next() {
+			Entry<String, Object> n;
+			if (iterator.hasNext()) do { 
+				n = iterator.next();
+				if (n.getValue() != null) return n;
+			} while(iterator.hasNext());
+			return null;
+		}
+
+	}
+
 	protected static final Comparator<Map.Entry<String, Object>> ENTRY_COMPARATOR = new Comparator<Map.Entry<String, Object>> (){
 		@Override
 		public int compare(Map.Entry<String, Object> o1, Map.Entry<String, Object> o2) {
@@ -92,14 +126,14 @@ public abstract class JSONFormatterBase implements JSONFormatter {
 	
 	@Override
 	public void format(OutputStream out, JSONObject jsonObject) throws JSONException {
-		PrintStream pout = createPrintStream(out);
+		T pout = createPrintStream(out);
 		append(pout, jsonObject);
 		pout.flush();
 	}
 
 	@Override
 	public void format(OutputStream out, JSONArray jsonArray) throws JSONException {
-		PrintStream pout = createPrintStream(out);
+		T pout = createPrintStream(out);
 		append(pout, jsonArray);
 		pout.flush();
 	}
@@ -107,20 +141,21 @@ public abstract class JSONFormatterBase implements JSONFormatter {
 
 	@Override
 	public void format(OutputStream out, Object jsonValue) throws JSONException {
-		PrintStream pout = createPrintStream(out);
+		T pout = createPrintStream(out);
 		appendAny(pout, jsonValue);
 		pout.flush();
 	}
 
+	/** called to setup a new PrintStream instance. */
+	protected abstract T setupPrintStream(OutputStream out, boolean autoflush, String charset) throws UnsupportedEncodingException ;
+	protected abstract void append(T pout, JSONArray o) throws JSONException;
+	protected abstract void append(T pout, JSONObject o) throws JSONException;
 	
-	protected abstract void append(PrintStream pout, JSONArray o) throws JSONException;
-	protected abstract void append(PrintStream pout, JSONObject o) throws JSONException;
-	
-	protected void appendPrimitiveValue(PrintStream pout, Object primitiveValue) {
+	protected void appendPrimitiveValue(T pout, Object primitiveValue) {
 		pout.print(primitiveValue.toString());
 	}
 
-	protected void appendAny(PrintStream pout, Object anyJsonValue) throws JSONException {
+	protected void appendAny(T pout, Object anyJsonValue) throws JSONException {
 		if (anyJsonValue == null) {
 			pout.print("null");
 		} else if (anyJsonValue instanceof String) {
@@ -138,11 +173,11 @@ public abstract class JSONFormatterBase implements JSONFormatter {
 		}
 	}
 	
-	protected void appendNewLine(PrintStream pout) {
+	protected void appendNewLine(T pout) {
 		pout.print("\n");
 	}
 
-	protected void appendUnicodeString(PrintStream pout, String str) throws JSONException {
+	protected void appendUnicodeString(T pout, String str) throws JSONException {
 		StringReader reader = new StringReader(str);
 		int read;
 		try {
@@ -157,7 +192,7 @@ public abstract class JSONFormatterBase implements JSONFormatter {
 		}
 	}
 
-	protected void appendUnicodeCharacter(PrintStream pout, char c) throws JSONException {
+	protected void appendUnicodeCharacter(T pout, char c) throws JSONException {
 		if (Character.isSupplementaryCodePoint(c)) 
 			throw new JSONException("Supplimentary code points are not supported by JSON");
 		switch (c) {
@@ -202,23 +237,32 @@ public abstract class JSONFormatterBase implements JSONFormatter {
 		return !encodingRanges.valid(c);
 	}
 	
+	/** creates an iterator, which respects formatter configuration 
+	 * in respect to sorting of entries and ignoring of null values. */
 	protected Iterator<Entry<String, Object>> iterator(Set<Entry<String, Object>> entrySet) {
+		Iterator<Entry<String, Object>> iterator;
 		if (cfg.sortMembers) {
 			ArrayList<Entry<String, Object>> entries = new ArrayList<>(entrySet);
 			Collections.sort(entries, ENTRY_COMPARATOR);
-			return entries.iterator();
+			iterator = entries.iterator();
 		} else {
-			return entrySet.iterator();
+			iterator = entrySet.iterator();
 		}
+		if (cfg.ignoreNull) {
+			iterator = new IgnoringNullIterator(iterator);
+		}
+		return iterator;
 	}
 
-	private PrintStream createPrintStream(OutputStream out) throws JSONException {
+
+	private T createPrintStream(OutputStream out) throws JSONException {
 		try {
-			return new PrintStream(out, false, cfg.charset.name());
+			return setupPrintStream(out, false, cfg.charset.name());
 		} catch (UnsupportedEncodingException e) {
 			throw new JSONException(e);
 		}
 	}
+
 
 	private String toString(ByteArrayOutputStream bout) throws JSONException {
 		try {

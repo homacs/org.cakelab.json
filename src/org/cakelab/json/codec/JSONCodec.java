@@ -14,10 +14,10 @@ import org.cakelab.json.parser.JSONParser;
 
 /**
  * This class implements serialising/deserialising 
- * of Java classes to and from JSON strings.
+ * of Java objects from and to JSON strings.
  * 
  * <h3>Multi-Threading</h3>
- * Not thread safe.
+ * Not thread-safe.
  * 
  * @author homac
  *
@@ -28,45 +28,35 @@ public class JSONCodec {
 	private JSONModeller modeller;
 	private JSONCodecConfiguration cfg;
 	
-	/**
-	 * Constructor using the default configuration.
-	 * @see {@link JSONCodecConfiguration}
-	 * @see {@link JSONDefaults#CODEC_CONFIG}
-	 */
+	/** Constructor using the default configuration.
+	 * @see {@link JSONDefaults#CODEC_CONFIG} */
 	public JSONCodec() {
 		this(CODEC_CONFIG);
 	}
 
 	/** Constructor using a specific configuration.
-	 * @param config Configuration to be used by the codec.
-	 */
+	 * @param cfg {@link JSONCodecConfiguration} to be used by the new JSONCodec.*/
 	public JSONCodec(JSONCodecConfiguration cfg) {
 		this.cfg = cfg;
 		this.parser = cfg.parserFactory.create(cfg.ignoreNull);
 		this.modeller = new JSONModeller(cfg);
 	}
 	
-	/** decodes the given json string into the given target object. 
-	 * @throws JSONException 
-	 */
-	public Object decodeObject(String jsonString, Object targetObject) throws JSONException {
+	/** Decodes the given jsonString into the given target javaObject of type T. */
+	public <T> T decodeObject(String jsonString, T javaObject) throws JSONException {
 		JSONObject json = parser.parseObject(jsonString);
-		return modeller.toJavaObject(json, targetObject);
+		return modeller.toJavaObject(json, javaObject);
 	}
 	
-	/** decodes the given json string from input stream into the given target object. 
-	 * @throws JSONException 
-	 */
-	public Object decodeObject(InputStream inputStream, Object targetObject) throws JSONException {
+	/** Decodes the given JSON string from input stream into the given target object of type T. */
+	public <T> T decodeObject(InputStream inputStream, T targetObject) throws JSONException {
 		JSONObject json = parser.parseObject(inputStream, cfg.charset);
 		return modeller.toJavaObject(json, targetObject);
 	}
 
 	
-	/** decodes the given json string from input stream into an object of the given target type. 
-	 * @throws JSONException 
-	 */
-	public Object decodeObject(InputStream inputStream, Class<?> targetType)  throws JSONException {
+	/** Decodes the given JSON string from input stream into a Java object of the given target type T.*/
+	public <T> T decodeObject(InputStream inputStream, Class<T> targetType)  throws JSONException {
 		try {
 			JSONObject json = parser.parseObject(inputStream, cfg.charset);
 			
@@ -79,9 +69,7 @@ public class JSONCodec {
 	}
 
 	
-	/** decodes the given json string into an object of the given target type. 
-	 * @throws JSONException 
-	 */
+	/** Decodes the given JSON string into a Java object of the given target type T. */
 	public <T> T decodeObject(String jsonString, Class<T> targetType) throws JSONException {
 
 		try {
@@ -96,6 +84,7 @@ public class JSONCodec {
 		}
 	}
 	
+	/** Encodes given Java object into a JSON string, which is returned. */
 	public String encodeObject(Object o) throws JSONException {
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -107,17 +96,18 @@ public class JSONCodec {
 		}
 	}
 
-	public void encodeObject(Object o, OutputStream out) throws JSONException {
+	/** Encodes given Java object into a JSON string, wirtten to out. */
+	public void encodeObject(Object javaObject, OutputStream out) throws JSONException {
 		Object json;
 		
-		if (o == null) {
+		if (javaObject == null) {
 			throw new JSONException("Cannot encode a toplevel null object");
 		}
 		
-		if (o instanceof JSONCompoundType) {
-			json = o;
+		if (javaObject instanceof JSONCompoundType) {
+			json = javaObject;
 		} else {
-			json = modeller.toJSON(o, null);
+			json = modeller.toJSON(javaObject, null);
 		}
 		
 		cfg.formatter.format(out, json);

@@ -8,11 +8,6 @@ public class JSONObject extends HashMap<String, Object> implements JSONCompoundT
 	private static final long serialVersionUID = 1L;
 
 	@Override
-	public Object put(String name, Object value) {
-		return super.put(name, value);
-	}
-	
-	@Override
 	public String toString() {
 		try {
 			return toString(JSONDefaults.FORMATTER);
@@ -26,20 +21,51 @@ public class JSONObject extends HashMap<String, Object> implements JSONCompoundT
 		return formatter.format(this);
 	}
 
-	public double getDouble(String key) {
-		Object o = get(key);
-		return doublevalue(o);
+	public JSONObject getObject(String key) {
+		return objectvalue(get(key));
 	}
 
-	public long getLong(String key) {
-		Object o = get(key);
-		return longvalue(o);
+	public JSONObject getObject(String key, JSONObject defaultValue) {
+		return objectvalue(get(key), defaultValue);
+	}
+
+	public JSONArray getArray(String key) {
+		return arrayvalue(get(key));
+	}
+	
+	public JSONArray getArray(String key, JSONArray defaultValue) {
+		return arrayvalue(get(key), defaultValue);
 	}
 	
 	public String getString(String key) {
-		return (String)get(key);
+		return stringvalue(get(key));
 	}
 	
+	public String getString(String key, String defaultValue) {
+		return stringvalue(get(key), defaultValue);
+	}
 	
+	public Double getDouble(String key) {
+		return doublevalue(get(key));
+	}
 
-}
+	public Double getDouble(String key, Double defaultValue) {
+		return doublevalue(get(key), defaultValue);
+	}
+
+	public Long getLong(String key) {
+		return longvalue(get(key));
+	}
+
+	public Long getLong(String key, Long defaultValue) {
+		return longvalue(get(key), defaultValue);
+	}
+
+	public Boolean getBoolean(String key) {
+		return booleanvalue(get(key));
+	}
+	
+	public Boolean getBoolean(String key, Boolean defaultValue) {
+		return booleanvalue(get(key), defaultValue);
+	}
+}	

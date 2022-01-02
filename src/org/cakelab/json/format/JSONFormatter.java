@@ -8,8 +8,14 @@ import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
 
 /**
- * An object implementing this interface is used during conversion of a JSONObject instance into a String.
+ * JSONFormatter creates and formats JSON strings from JSON objects.
  * The implementing string formatter can format the string output such as to add indenting.
+ * 
+ * @see JSONFormatterPrettyprint
+ * @see JSONFormatterCompact
+ * 
+ * <h3>Multi-Threading</h3>
+ * Formatters are supposed to be thread-safe.
  * 
  * @author homac
  *
@@ -28,6 +34,5 @@ public interface JSONFormatter {
 	void format(OutputStream out, JSONArray jsonArray) throws JSONException;
 	void format(OutputStream out, JSONCompoundType jsonCompound) throws JSONException;
 	void format(OutputStream out, Object jsonValue) throws JSONException;
-
 	
 }

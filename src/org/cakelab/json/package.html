@@ -6,17 +6,27 @@ This package contains a JSON API and a JSON/POJO codec.
 </p>
 <p>
 This package provides two ways to deal with JSON documents. A simple API mapping the 
-JSON document to a hierarchical set of name value pairs and a codec to map between 
-JSON and sets of plain Java objects using the reflection API. Both methods will be 
-explained in the following sections.
+JSON document to a JSON object tree in Java and a codec to map a JSON document to 
+plain Java objects using the reflection API. 
 </p>
 
-<h3>Mapping to Sets of Name-Value Pairs</h3>
+<h3>JSON Object Tree</h3>
+
 <p>
-Using this method, you get access to the JSON content via the classes JSONObject 
-and JSONArray. The Parser creates a hierarchy of instances of these classes 
-according to the given JSON document.
+JSON object tree is a representation of a JSON object in Java. 
+Mapping between JSON objects and their Java representation is 
+depicted in the following table:
 </p>
+<table border="1">
+ <tr><th>JSON type</th>  <th>Java Representation</th></tr>
+ <tr><td>object</td>     <td>JSONObject</td></tr>
+ <tr><td>array</td>      <td>JSONArray</td></tr>
+ <tr><td>true/false</td> <td>Boolean</td></tr>
+ <tr><td>number</td>     <td>Double/Long</td></tr>
+ <tr><td>string</td>     <td>String</td></tr>
+ <tr><td>null</td>       <td>null</td></tr>
+</table>
+
 <ul>
 <li>Instances of JSONObject contain name-value pairs while a value can reference 
 other instances of JSONObject or JSONArray. </li>
@@ -24,12 +34,9 @@ other instances of JSONObject or JSONArray. </li>
 to another JSONObject or JSONArray again.
 </ul>
 <p>
-In both cases, values are decoded from the given string and stored in scalar types 
-such as Integer, Double, Boolean etc.
+JSON numbers are mapped to either Long or Double to keep accuracy high. JSONObject 
+and JSONArray provide methods to retrieve either counterpart.
 </p>
-
-
-
 <h4>Example</h4>
 <p>The following JSON document:
 <pre>
@@ -38,10 +45,10 @@ such as Integer, Double, Boolean etc.
   "member2": true,
   "member3": [
     {
-      "m1": "Hello my friend!"
+      "m1": "Hello friend!"
     },
     {
-      "m1": null
+      "m2": null
     }
   ]
 }
@@ -49,66 +56,52 @@ such as Integer, Double, Boolean etc.
 Can be parsed with an instance of the class Parser of this package:
 
 <pre>
-Parser p = ParserFactory.getDefault().create();
+JSONParser p = new DefaultParser();
 JSONObject json = p.parse(jsonString);
 </pre>
-<p>
-The given example above would result in an object hierarchy like this:
-</p>
-<ul>
-	<li>jsonObject
-		<ul>
-			<li>jsonArray
-				<ul>
-					<li>jsonObject</li>
-					<li>jsonObject</li>
-				</ul>
-			</li>
-		</ul>
-	</li>
-</ul>
 
 <p>
 Access to the member variables is provided via <code>get</code> and <code>set</code> methods.
 </p>
 <pre>
-if ((boolean)json.get("member2")) {
-	JSONArray array = (JSONArray)json.get("member3")
-	JSONObject object = (JSONObject)array.get(1);
-	object.set("m1", "You'r not my friend, dude!");
+if (json.getBoolean("member2")) {
+	JSONArray array = json.getArray("member3")
+	JSONObject object = array.getObject(1);
+	object.set("m2", "Hello there!");
 }
 </pre>
 <p>
 Both classes (JSONObject and JSONArray) provide a method <code>toString</code> to 
-receive the JSON document.
+receive the corresponding JSON document with indenting.
 </p>
 <pre>
 String jsonString = jsonObject.toString();
 </pre>
-
- 
-
-
-<h3>Mapping to Sets of Plain Java Objects</h3>
 <p>
-Using this method is based on the use of the JSONCodec in this package. 
-It allows you to map JSON documents directly to Java objects and vice versa. 
-This of course requires that the class of the object contains the member 
-variables which exist in the JSON document.
+A more compact representation can be achieved by a so-called JSONFormatter named
+JSONFormatterCompact.
+<pre>
+JSONFormatter formatter = new JSONFormatterCompact();
+String jsonString = jsonObject.toString(formatter);
+</pre>
+
+
+<h3>Mapping to Java Objects</h3>
+<p>
+The JSONCodec allows to map JSON documents to Java objects and vice versa. 
+This of course requires that the class of that object contains member 
+variables corresponding to the entries found in a JSON object of a JSON document.
 </p>
 <p>
-<b><em>Important Rules:</em></b>
+<b><em>Rules:</em></b>
 <ul>
 <li>The data model has to be hierarchical.</li>
 <li><code>static</code> and <code>transient</code> members will be ignored.</li>
 <li>Do not use nested classes (not supported yet).</li>
 <li>If you are using polymorphism on classes of member attributes you have to configure the codec specially (see Section on polymorphism below).</li>
 </ul>
-More on those rules and workarounds see Rules and Workarounds section below.
+Read more about <em>Rules and Workarounds</em> below.
 <p>
-<em>Note:</em> The codec internally uses the Parser class to turn the JSON document 
-in instances of JSONObject and JSONArray before it maps it to your Java object. 
-A better solution (possibly coming in future) is to parse it directly to the object.
 
 <h4>Example</h4>
 To map the JSON document given above to Java objects you would need classes like this: 
@@ -117,56 +110,86 @@ class A {
 	double member1;
 	boolean member2;
 	B[] member3;
-	/* hide this from the JSON codec */
-	transient int dont_mind_me;
+	
+	transient int dont_mind_me; /* <-- hidden from encoding/decoding */
 }
 class B {
 	String m1;
 }
 </pre>
 <p>
-The JSONCodec is used to decode the given JSON document to your Java object.
+The JSONCodec is used to decode the given JSON document to Java objects.
 </p>
 <pre>
-JSONCodec codec = new JSONCodec();
-A obj = new A();
-codec.decodeObject(jsonString, obj);
-</pre>
-<p>Access is much simpler this way, as the next code fragment 
-demonstrates, which realises the same functionality as in the example above.</p>
-<pre>
-if (obj.member2) {
-	obj.member3[1].m1 = "Now we'r talking!";
-}
+A obj = jsonCodec.decodeObject(jsonString, A.class);
 </pre>
 <p>
-The codec is also used to turn any Java object into a JSON document.
+Or like this:
+</p>
+<pre>
+A obj = new A();
+jsonCodec.decodeObject(jsonString, obj);
+</pre>
+<p>
+The codec is also used to turn Java objects into JSON documents.
 </p>
 <pre>
 String jsonString = codec.encodeObject(a);
 </pre>
+
+<h3>Data Model Conversion</h3>
+<p>
+The JSONModeller converts between JSON object tree representation and a 
+given Java object Data Model. This is useful, when assembling a JSON 
+object tree in parts manually.
+
+The data model must conform to the same rules stated in section 
+<em>Mapping to Java Objects</em>.
+
+<p>
+Example: Adding an object to given object tree root:
+</p>
+<pre>
+JSONObject root = ...;
+MyObject myObject = ...;
+JSONModeller modeller = new JSONModeller(cfg);
+JSONObject jsonObject = modeller.toJSON(myObject);
+root.put("myObject", jsonObject);
+</pre>
+
+<p>
+Example: Receiving an object from a given JSON object tree:
+</p>
+<pre>
+JSONObject root = ...;
+JSONModeller modeller = new JSONModeller(cfg);
+JSONObject jsonObject = root.get("myObject");
+MyObject myObject = modeller.toJavaObject(jsonObject, MyObject.class);
+</pre>
+
+A JSONFormatter and JSONParser can be used to transform between 
+JSON document and JSON object tree representation to complete the cycle.
+
 <h2>Rules and Workarounds</h2>
-<h3>Members with modifier <code>static</code> or <code>transient</code></h3>
+<h3>Modifiers <code>static</code> and <code>transient</code></h3>
 <p>
 As a feature, <code>static</code> and <code>transient</code> members of an object 
-will be ignored by the codec.
-The <code>transient</code> modifier allows you to control which members 
-will be ignored by the codec which (for example) comes in handy if you have 
-to resolve cyclic dependencies in your data model or you have runtime variables
-as members which you don't want to be persistent.
+will be ignored during the encoding/decoding process. This allows to control which
+data will be actually encoded. 
 
-The <code>static</code> members have been excluded because they are actually 
-not a member of the object but of the class. That means, there is no point in 
-storing them in every object.
+<h3 id="hierarchy">Resolving Cyclic Dependencies</h3>
+<p>
+The codec traverses through your data model by iterating over all members of the given 
+root object and following each reference to other objects. Thus, a data model must be 
+strictly hierarchically (tree-like). Cyclic dependencies have to be resolved by the use
+of the <code>transient</code> modifier.
+</p>
+<p>
+The following example demonstrates the use of <code>transient</code> 
+to resolve a cyclic dependency between two classes <code>A</code> and 
+<code>B</code>.
 </p>
 
-<h3 id="hierarchy">Hierarchical Data Model</h3>
-The codec traverses through your data model by iterating over all members of the given 
-root object and following each reference to other objects until there are no more 
-references. Thus, if there are for example two objects which reference each other,
-the codec would get stuck in a life lock forever following from one object to 
-the other and back. To prevent such cycles in your data model you have to declare 
-one of the references to be <code>transient</code> as shown in the example below.
 <pre>
 class A {
 	B refB;
@@ -176,10 +199,11 @@ class B {
 }
 </pre>
 
-<h3>Polymorphism and the Special Attribute <code>class</code></h3>
-For those who don't know: You apply polymorphism if you have multiple classes derived
-from a common super class or interface and you use the type of the super class or 
-interface to reference the objects of the subclasses (see example below).
+<h3>Polymorphism</h3>
+Use of <a href="https://en.wikipedia.org/wiki/Polymorphism_(computer_science)">Polymorphism</a>
+requires type information about objects referenced through a super class or interface.
+A JSONCodec must be configured to add this information 
+(see JSONCodecConfiguration.supportClassAttribute).
 
 <pre>
 class MySuperClass {}
@@ -195,58 +219,38 @@ class PolymorphismUser {
 }
 </pre>
 
+
 <p>
-JSON does not know anything about classes and is not type save. Thus, the parser 
-requires additional information to determine the actual type of an object if it 
-does not match with the type of the variable which will receive the reference.
-</p>
-<p>
-Since Java has built-in runtime type information on each object stored in a global
-variable for each class which is called "<code>class</code>", this attribute name 
-is implicitly reserved and can be used for this purpose if required.
-</p>
-<p>
-For this purpose, you can configure the JSONCodec to use the <code>class</code> attribute. 
-Refer to class <code>JSONCodecConfiguration</code> to do so.
-</p>
-<p>
-When enabled, the codec will compare the type of a reference and the type of 
-a referenced object and in case of differences (inheritance) it will 
-automatically add an attribute <code>class</code> which holds the name of the class, when encoding. 
-When decoding, the codec will in turn search for an attribute <code>class</code> and use the type
-information to instantiate the proper object.
+When support of the 'class' attribute is enabled, the codec will compare the type of a 
+reference to the type of the referenced object. A <code>class</code> attribute 
+will be added to the corresponding JSON object, if reference type and referenced 
+object type differ.
+The <code>class</code> attribute will then carry the fully qualified name of the 
+referenced object type. 
+When decoding, the JSONCodec (or JSONModeller, see below) will in turn search for 
+a <code>class</code> attribute in such cases, to instantiate the proper object.
 </p>
 
 
 <pre>
-/* given an object with reference on A while reference is of type SuperClass */
+/* given an object with reference on A, while reference is of type SuperClass */
 PolymorphismUser object = new PolymorphismUser();
 object.ref_on_A_or_B = new A();
 	
 /* configure and instantiate a codec which supports the "class" attribute. */
-JSONCodecConfiguration cfg = new JSONCodecConfiguration();
-cfg.considerClassAttribute = true;
+JSONCodecConfiguration cfg = new JSONCodecConfiguration()
+									.supportClassAttribute(true);
 JSONCodec codec = new JSONCodec(cfg);
-	
+
 /* encode object into a json string */
 String json = codec.encodeObject(object);
 	
 /* and decode it again using a codec with the same configuration */
-PolymorphismUser o2 = (PolymorphismUser) codec.decodeObject(json, PolymorphismUser.class);
+PolymorphismUser o2 = codec.decodeObject(json, PolymorphismUser.class);
 	
 /* member o2.ref_on_A_or_B is of type A again. */
 assert object.ref_on_A_or_B.getClass().equals(o2.ref_on_A_or_B.getClass());		
 </pre>
-
-
-<h3>Nested Classes</h3>
-Nested classes are those classes declared inside of another class. Nested classes
-have a pointer on their surrounding class, which usually has a pointer on the 
-nested class (that's the reason why you declared this class initially inside of
-the other class). As a result your data model is no longer hierarchical and the
-codec will get stuck in an endless loop as explained above 
-(see <a href="#hierarchy">Hierachical Data Model</a>). Another thing to be 
-considered in a future version of org.cakelab.json.
 
 </body>
 </html>

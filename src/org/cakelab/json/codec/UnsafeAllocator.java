@@ -6,23 +6,18 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
- * This class provides a method to instantiate objects of given classes without 
- * calling a constructor for the object.
+ * This class provides a method to allocate memory for objects 
+ * of given classes without calling a constructor.
  * 
  * @author homac
  *
  */
 public abstract class UnsafeAllocator {
 	
-	/**
-	 * This method instantiates an object of given classes without 
-	 * calling a constructor for the object.
-	 * @param clazz
-	 * @return The new instance.
-	 * @throws InstantiationException Thrown on any problem during instantiation.
-	 */
+	/** Instantiates an object of type T without calling a constructor. */
 	public abstract <T> T newInstance(Class<T> clazz) throws InstantiationException;
 	
+	/** Creates an UnsafeAllocator. */
 	public static UnsafeAllocator create() {
 		// try JVM
 		// public class Unsafe {

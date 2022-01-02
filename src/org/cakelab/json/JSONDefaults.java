@@ -14,10 +14,12 @@ import org.cakelab.json.parser.basic.DefaultParserFactory;
 public class JSONDefaults {
 
 	public static final Charset CHARSET = StandardCharsets.UTF_8;
-	public static final boolean FORMATTER_SORT_MEMBERS = true;
-	public static final boolean FORMATTER_UNICODE_VALUES = true;
+	public static final boolean IGNORE_NULL = false;
 	
-	public static final JSONFormatterConfiguration FORMATTER_CONFIG = new JSONFormatterConfiguration(CHARSET, FORMATTER_SORT_MEMBERS, FORMATTER_UNICODE_VALUES);
+	public static final boolean SORT_MEMBERS = true;
+	public static final boolean WRITE_UNICODE_VALUES = true;
+	
+	public static final JSONFormatterConfiguration FORMATTER_CONFIG = new JSONFormatterConfiguration(CHARSET, SORT_MEMBERS, WRITE_UNICODE_VALUES, IGNORE_NULL);
 	public static final JSONFormatter FORMATTER;
 	static {
 		try {
@@ -30,11 +32,10 @@ public class JSONDefaults {
 	
 	public static final JSONParserFactory PARSER_FACTORY = new DefaultParserFactory();
 
-	public static final boolean CODEC_IGNORE_NULL = false;
-	public static final boolean CODEC_IGNORE_MISSING_FIELDS = false;
-	public static final boolean CODEC_SUPPORT_CLASS_ATTRIB = false;
+	public static final boolean IGNORE_MISSING_FIELDS = false;
+	public static final boolean SUPPORT_CLASS_ATTRIB = false;
 	
-	public static final JSONCodecConfiguration CODEC_CONFIG = new JSONCodecConfiguration(CHARSET, CODEC_IGNORE_NULL, CODEC_IGNORE_MISSING_FIELDS, CODEC_SUPPORT_CLASS_ATTRIB, PARSER_FACTORY, FORMATTER);
+	public static final JSONCodecConfiguration CODEC_CONFIG = new JSONCodecConfiguration(CHARSET, IGNORE_NULL, IGNORE_MISSING_FIELDS, SUPPORT_CLASS_ATTRIB, PARSER_FACTORY, FORMATTER);
 	
 	public static JSONParser createDefaultParser() {
 		return PARSER_FACTORY.create();

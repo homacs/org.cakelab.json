@@ -10,9 +10,10 @@ import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
 import org.cakelab.json.parser.JSONParser;
 
-/** Parser used by a JSONCodec to parse JSON strings. 
- * Called Java Parser because it is written in Java (not C).
- */
+/** Default JSONParser. 
+ * 
+ * <h3>Multi-Threading</h3>
+ * Not thread-safe.*/
 public class DefaultParser implements JSONParser {
 	
 	private Scanner scanner;
@@ -119,7 +120,9 @@ public class DefaultParser implements JSONParser {
 		if (lookahead == endToken) return;
 		while (true) {
 			Object value = parseValue();
-			if (!(ignoreNull && value == null)) o.add(value);
+			// We cannot ignore null values here, because it affects 
+			// position of subsequent elements in the array.
+			o.add(value);
 			lookahead = scanner.getLookahead();
 			if (lookahead == endToken) break;
 			
@@ -177,7 +180,6 @@ public class DefaultParser implements JSONParser {
 
 	private void scanCharToken(int tokenCharacter) throws IOException, JSONException {
 		if (scanner.next() != (char)tokenCharacter) error("expected token '"+  (char)tokenCharacter + "'");
-		
 	}
 
 	private void error(String string) throws JSONException {

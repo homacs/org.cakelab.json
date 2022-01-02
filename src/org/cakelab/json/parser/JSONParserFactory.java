@@ -1,5 +1,16 @@
 package org.cakelab.json.parser;
 
+import org.cakelab.json.JSONDefaults;
+
+/**
+ * Creates JSONParser instances.
+ * 
+ * <h3>Multi-Threading</h3>
+ * Implementations are supposed to be thread-safe.
+ * 
+ * @author homac
+ *
+ */
 public abstract class JSONParserFactory {
 	
 	/**
@@ -9,8 +20,9 @@ public abstract class JSONParserFactory {
 	 */
 	public abstract JSONParser create(boolean ignoreNull);
 
+	/** Create a parser using {@link JSONDefaults#CODEC_IGNORE_NULL}. */
 	public JSONParser create() {
-		return create(false);
+		return create(JSONDefaults.IGNORE_NULL);
 	}
 
 	

@@ -1,23 +1,20 @@
 package org.cakelab.json.codec;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
-
-import org.cakelab.json.JSONException;
 
 public class ReflectionHelper {
 	
-	private Map<Class<?>, Vector<Field>> fieldListsCache = new HashMap<>();
+	private Map<Class<?>, List<Field>> fieldListsCache = new HashMap<>();
 	private Map<Class<?>, Map<String, Field>> fieldMapsCache = new HashMap<>();
 	
 	public List<Field> getDeclaredFields(Class<?> type) {
-		Vector<Field> fields = fieldListsCache.get(type);
+		List<Field> fields = fieldListsCache.get(type);
 		if (fields == null) {
-			fields = new Vector<Field>();
+			fields = new ArrayList<Field>();
 			if (!type.equals(Object.class)) {
 				List<Field> superFields = getDeclaredFields(type.getSuperclass());
 				fields.addAll(superFields);
@@ -71,37 +68,6 @@ public class ReflectionHelper {
 		return f;
 	}
 
-
-	public static void checkParameter(Method method, int param, Field field, Class<?> paramType) throws JSONException {
-		Class<?>[] params = method.getParameterTypes();
-		if (params.length < param+1) {
-			throw new JSONException(method.getDeclaringClass() + "." + method.getName() + "(): needs a " + param + ". parameter");
-		} else if (!params[param].equals(paramType)) {
-			throw new JSONException(method.getDeclaringClass() + "." + method.getName() + "(): " + Integer.toString(param+1) + ". parameter must have type " + paramType.getSimpleName());
-		}
-
-	}
-
-
-	public static Method findMethod(Class<?> target, String methodName, Class<?>[] params) throws JSONException {
-		Method method = null;
-		try {
-			/* try direct access to public methods with parameter types */
-			return target.getMethod(methodName, params);
-		} catch (Exception e) {
-			/* search all methods manually */
-			for (Method m : target.getDeclaredMethods()) {
-				if (m.getName().equals(methodName)) {
-					method = m;
-					break;
-				}
-			}
-		}
-		if (method == null) {
-			throw new JSONException(target.getName() + '.' + methodName + "(): not found");
-		}
-		return method;
-	}
 
 	public static boolean isSubclassOf(Class<?> derived, Class<?> superclass) {
 		if (derived.equals(superclass)) return true;

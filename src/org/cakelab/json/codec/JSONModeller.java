@@ -13,7 +13,7 @@ import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
 
 /**
- * Turns Java object into JSONObject and vice versa.
+ * Turns Java object into JSON object tree and vice versa.
  * 
  * @author homac
  *
@@ -70,15 +70,9 @@ public class JSONModeller {
 	}
 
 
-	/** Encodes the given object into a JSONObject, JSONArray 
-	 * or a JSON supported primitive type (incl. String), 
-	 * depending on the given object type.
-	 * @param o
-	 * @return
-	 * @throws JSONException 
-	 */
-	public Object toJSON(Object o) throws JSONException {
-		return toJSON(o, o.getClass());
+	/** Encodes the given Java object into a JSON object. */
+	public Object toJSON(Object javaObject) throws JSONException {
+		return toJSON(javaObject, javaObject.getClass());
 	}
 
 	/** returns a JSONObject, JSONArray or primitive value (including String)

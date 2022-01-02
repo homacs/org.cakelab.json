@@ -6,10 +6,12 @@ import java.nio.charset.Charset;
 
 import org.cakelab.json.JSONException;
 import org.cakelab.json.JSONObject;
+import org.cakelab.json.JSONDefaults;
 
 /** A JSON Parser turns JSON strings into a JSON object tree. 
  * 
- * Can be created through {@link JSONParserFactory} */
+ * Instances can be created through {@link JSONParserFactory}. 
+ * @see JSONDefaults#PARSER_FACTORY */
 public interface JSONParser {
 	
 	/**

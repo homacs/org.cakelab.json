@@ -1,11 +1,14 @@
 package org.cakelab.json.format;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Arrays;
 import java.util.Map;
@@ -14,73 +17,101 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.cakelab.json.JSONException;
 import org.cakelab.json.parser.basic.DefaultParser;
 
+/** Instances of this class manage valid code point ranges for a given charset used in encoding. */
 public abstract class CharsetRanges {
 
-	private static class CharsetRangesImpl extends CharsetRanges {
-		char ranges[];
-		int size;
-		int capacity;
+	private static class CharsetRangeDouble extends CharsetRanges {
+		private char firstLower;
+		private char firstUpper;
+		private char secondLower;
+		private int secondUpper; ///< last upper can be larger than Character.MAX_VALUE
 
-		private CharsetRangesImpl() {
-			capacity = 8;
-			ranges = new char[capacity];
+		public CharsetRangeDouble(char firstLower, char firstUpper, char secondLower, int secondUpper) {
+			this.firstLower = firstLower;
+			this.firstUpper = firstUpper;
+			this.secondLower = secondLower;
+			this.secondUpper = secondUpper;
+		}
+
+		@Override
+		public boolean valid(char c) {
+			return (firstLower <= c && c < firstUpper) ||
+					(secondLower <= c && c < secondUpper) ;
+		}
+
+		@Override
+		public boolean empty() {
+			return false;
+		}
+
+	}
+
+	private static class CharsetRangeSingle extends CharsetRanges {
+
+		private char lowerBound;
+		private char upperBound;
+
+		public CharsetRangeSingle(char lowerBound, char upperBound) {
+			this.lowerBound = lowerBound;
+			this.upperBound = upperBound;
+		}
+
+		@Override
+		public boolean valid(char c) {
+			return lowerBound <= c && c < upperBound;
+		}
+
+		@Override
+		public boolean empty() {
+			return false;
+		}
+
+	}
+
+	private static class CharsetRangesList extends CharsetRanges {
+		char ranges[];
+
+		CharsetRangesList(char ranges[]) {
+			this.ranges = ranges;
+			assert(ranges != null && ranges.length > 0);
 		}
 		
 		public boolean valid(char c) {
 			// a range set with zero ranges is not supported
-			assert (size > 0);
 			// sizes are so tiny that linear search is faster than anything else
 			int i = 0;
-			for (; i < size && c >= ranges[i]; i++);
+			for (; i < ranges.length && c >= ranges[i]; i++);
 			// i points at end of interval, which contains c
 			return isValidRangeEndBoundary(i);
 		}
 
 		public String toString() {
 			String s = "";
-			for (int i = 0; i < size-1; i += 2) {
+			for (int i = 0; i < ranges.length-1; i += 2) {
 				s += "[" + hex(ranges[i]) + ',' + hex((int)(ranges[i + 1])-1) + ']';
 			}
-			if (size % 2 == 1) {
-				int i = size-1;
+			if (ranges.length % 2 == 1) {
+				int i = ranges.length-1;
 				s += "[" + hex(ranges[i]) + ",inf]";
 			}
 			return s;
 		}
-
-		private void add(char boundary) {
-			grow();
-			ranges[size++] = boundary;
+		
+		@Override
+		public boolean empty() {
+			return ranges.length == 0;
 		}
 
 		private boolean isValidRangeEndBoundary(int index) {
 			return (index % 2 == 1);
 		}
 
-		private void grow() {
-			if (size == capacity) {
-				capacity += 8;
-				ranges = Arrays.copyOf(ranges, capacity);
-			}
-		}
-
-		public int size() {
-			return size/2;
-		}
-
-
-		public boolean empty() {
-			return size == 0;
-		}
-
 	}
-
-
+	
 	private static class Builder {
 		
-		private static final int SET_SIZE_LIMIT = 15;
-
-		private static final boolean TEST_INTERNAL = false;
+		private static final int SET_SIZE_LIMIT = 31;
+		private static final boolean TEST_FORMATTER_AND_PARSER = true;
 		
 		private Charset charset;
 
@@ -90,43 +121,65 @@ public abstract class CharsetRanges {
 		private ByteBuffer byteBuffer;
 
 		private DefaultParser parser;
-		private JSONFormatterPlain formatter;
+		private JSONFormatterCompact formatter;
 
-		private CharsetRangesImpl ranges;
+		static final int INITIAL_CAPACITY = 8;
+		private int capacity;
+		private char ranges[];
+		private int size;
 
 		public Builder(Charset charset) {
 			this.charset = charset;
 			setupEncoderDecoder();
 			
-			if(TEST_INTERNAL) {
+			if(TEST_FORMATTER_AND_PARSER) {
 				parser = new DefaultParser(false);
 				setupFormatter();
 			}
 			
-			ranges = new CharsetRangesImpl();
+			ranges = new char[INITIAL_CAPACITY];
+			capacity = INITIAL_CAPACITY;
+			size = 0;
 		}
 		
-
-		public CharsetRanges build() throws UnsupportedCharsetException {
+		public CharsetRangesList build() throws UnsupportedCharsetException {
 			boolean validRange = true;
-			char begin = 0;
+			char begin = '\0';
 			
-			ranges.add(begin);
+			add(begin); // we define \0 to be always valid -> we always start with a valid boundary
 			
-			for (int i = '\0' + 1; i <= 0xFFFF; i++) {
+			for (int i = begin + 1; i <= Character.MAX_VALUE; i++) {
 				char c = toChar(i);
 				validRange = evaluate(c, validRange);
 			}
+			shrink();
+			return new CharsetRangesList(ranges);
+		}
 
-			return ranges;
+		private void add(char boundary) {
+			grow();
+			ranges[size++] = boundary;
+		}
+
+		private void shrink() {
+			if (size < ranges.length) {
+				ranges = Arrays.copyOf(ranges, size);
+				capacity = size;
+			}
 		}
 		
+		private void grow() {
+			if (size == capacity) {
+				capacity *= 2;
+				ranges = Arrays.copyOf(ranges, capacity);
+			}
+		}
 		private void setupFormatter() {
 			try {
 				JSONFormatterConfiguration cfg = new JSONFormatterConfiguration()
 						.charset(charset)
 						.unicodeValues(false);
-				formatter = new JSONFormatterPlain(cfg);
+				formatter = new JSONFormatterCompact(cfg);
 			} catch (JSONException e) {
 				// formatter is not supposed to throw an exception
 				// if cfg.unicodeValues is false.
@@ -158,15 +211,15 @@ public abstract class CharsetRanges {
 		private boolean evaluate(char c, boolean validRange) {
 			if (canEncodeDecode(c)) {
 				if (!validRange) {
-					if (ranges.size() > SET_SIZE_LIMIT) {
+					if (size > SET_SIZE_LIMIT) {
 						throw new UnsupportedCharsetException(charset.name());
 					}
-					ranges.add(c);
+					add(c);
 					return true;
 				}
 			} else {
 				if (validRange) {
-					ranges.add(c);
+					add(c);
 					return false;
 				}
 			}
@@ -176,7 +229,7 @@ public abstract class CharsetRanges {
 		private boolean canEncodeDecode(char c) {
 			try {
 				if (c == encodeDecode(c)) {
-					if (TEST_INTERNAL) {
+					if (TEST_FORMATTER_AND_PARSER) {
 						String strValue = String.valueOf(c);
 						String jsonString = formatter.format(strValue);
 						String resultString = parser.parse(jsonString);
@@ -186,7 +239,7 @@ public abstract class CharsetRanges {
 					}
 				}
 			} catch (Throwable e) {
-				// intentionally empty
+				// part of the evaluation -> false
 			}
 			return false;
 		}
@@ -217,31 +270,43 @@ public abstract class CharsetRanges {
 	} // end of class Builder
 
 	
-	public abstract int size();
-	public abstract boolean empty();
 	public abstract boolean valid(char c);
 	
+	public abstract boolean empty();
+
+	
+	private static CharsetRanges newCharsetRanges(char[] ranges) {
+		switch(ranges.length) {
+		case 1: assert(ranges[0] == '\0'); return FULL_RANGE;
+		case 2: return new CharsetRangeSingle(ranges[0], ranges[1]);
+		case 3: return new CharsetRangeDouble(ranges[0], ranges[1], ranges[2], 0x10000);
+		case 4: return new CharsetRangeDouble(ranges[0], ranges[1], ranges[2], ranges[3]);
+		default: return new CharsetRangesList(ranges);
+		}
+	}
 	
 	static final CharsetRanges FULL_RANGE = new CharsetRanges() {
 		@Override
-		public int size() {return 1;}
+		public boolean valid(char c) {return true;}
 		@Override
 		public boolean empty() {return false;}
-		@Override
-		public boolean valid(char c) {return true;}
 	};
 	
 	private static final CharsetRanges NOT_SUPPORTED = new CharsetRanges() {
 		@Override
-		public int size() {return 0;}
+		public boolean valid(char c) {throw new UnsupportedOperationException();}
 		@Override
-		public boolean empty() {return true;}
-		@Override
-		public boolean valid(char c) {return false;}
+		public boolean empty() {throw new UnsupportedOperationException();}
 	};
 	
 	private static Map<Charset, CharsetRanges> cache = new ConcurrentHashMap<>();
-	
+	static {
+		// generated by DefaultRangesCodeGen
+		cache.put(StandardCharsets.UTF_8, newCharsetRanges(new char[]{ '\u0000', '\uD800', '\uE000', }));
+		cache.put(StandardCharsets.UTF_16, newCharsetRanges(new char[]{ '\u0000', '\uD800', '\uE000', '\uFFFE', '\uFFFF', }));
+		cache.put(StandardCharsets.US_ASCII, newCharsetRanges(new char[]{ '\u0000', '\u0080', }));
+		cache.put(StandardCharsets.ISO_8859_1, newCharsetRanges(new char[]{ '\u0000', '\u0100', }));
+	}
 	
 	public static CharsetRanges get(Charset charset) throws JSONException {
 		CharsetRanges result = cache.get(charset);
@@ -253,10 +318,11 @@ public abstract class CharsetRanges {
 		return result;
 	}
 
-	public static CharsetRanges build(Charset charset) {
+	private static CharsetRanges build(Charset charset) {
 		try {
 			Builder builder = new Builder(charset);
-			return builder.build();
+			CharsetRangesList list = builder.build();
+			return newCharsetRanges(list.ranges);
 		} catch (UnsupportedCharsetException e) {
 			return NOT_SUPPORTED;
 		}
@@ -270,5 +336,59 @@ public abstract class CharsetRanges {
 		return (char)(i & 0xFFFF);
 	}
 
+	static class DefaultRangesCodeGen {
+		
+		private static String charValueCode(char c) {
+			String hexDigits = hex(c);
+			while (hexDigits.length() < 4) hexDigits = "0" + hexDigits;
+			return "'\\u" + hexDigits + "'";
+		}
+	
+		private static String toCodeString(String name, char[] ranges) {
+			String code = "cache.put(StandardCharsets." + getConstantName(name) + ", newCharsetRanges(";
+			code += "new char[]{ ";
+			String indent = "";
+			int i = 0;
+			for (; i < ranges.length; i++) {
+				code += indent + charValueCode(ranges[i]) + ", ";
+			}
+	
+			code += "}";
+			code +=	"));";
+			
+			return code.toString();
+		}
+		
+		static String getConstantName(String name) {
+			StringReader r = new StringReader(name);
+			StringBuilder s = new StringBuilder();
+			int c;
+			try {
+				while (-1 < (c = r.read())) {
+					if (isPunctuator((char) c)) s.append("_");
+					else s.append(Character.toUpperCase((char) c));
+				}
+			} catch (IOException e) {
+				// impossible
+			}
+			return s.toString();
+		}
+		static boolean isPunctuator(char c) {
+			return c == '-' || c == '+' || c == '.';
+		}
+		static void gen(Charset charset) {
+			CharsetRangesList ranges = new Builder(charset).build();
+			String name = charset.name();
+			String code = toCodeString(name, ranges.ranges);
+			System.out.println(code);
+		}
+	}
+	
+	public static void main(String[] args) {
+		DefaultRangesCodeGen.gen(StandardCharsets.UTF_8);
+		DefaultRangesCodeGen.gen(StandardCharsets.UTF_16);
+		DefaultRangesCodeGen.gen(StandardCharsets.US_ASCII);
+		DefaultRangesCodeGen.gen(StandardCharsets.ISO_8859_1);
+	}
 
 }
