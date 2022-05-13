@@ -5,6 +5,7 @@ import static org.cakelab.json.JSONDefaults.IGNORE_MISSING_FIELDS;
 import static org.cakelab.json.JSONDefaults.IGNORE_NULL;
 import static org.cakelab.json.JSONDefaults.SUPPORT_CLASS_ATTRIB;
 import static org.cakelab.json.JSONDefaults.FORMATTER;
+import static org.cakelab.json.JSONDefaults.MAPPING;
 import static org.cakelab.json.JSONDefaults.PARSER_FACTORY;
 
 import java.nio.charset.Charset;
@@ -69,8 +70,10 @@ public class JSONCodecConfiguration {
 	 * <br/><b>Default:</b>  {@link JSONDefaults#FORMATTER} */
 	public final JSONFormatter formatter;
 	
-
-
+	/** Defines list of specific JSON mappings to be used by the json modeller. 
+	 * <br/><b>Default: empty*/
+	public final JSONMappingMap mapping;
+	
 	public JSONCodecConfiguration() {
 		this.charset = CHARSET;
 		this.ignoreNull = IGNORE_NULL;
@@ -78,8 +81,9 @@ public class JSONCodecConfiguration {
 		this.supportClassAttribute = SUPPORT_CLASS_ATTRIB;
 		this.parserFactory = PARSER_FACTORY;
 		this.formatter = FORMATTER;
+		this.mapping = MAPPING;
 	}
-		
+
 	public JSONCodecConfiguration(JSONCodecConfiguration that) {
 		this.charset = that.charset;
 		this.ignoreNull = that.ignoreNull;
@@ -87,33 +91,41 @@ public class JSONCodecConfiguration {
 		this.supportClassAttribute = that.supportClassAttribute;
 		this.parserFactory = that.parserFactory;
 		this.formatter = that.formatter;
+		this.mapping = that.mapping;
 	}
 	
-	public JSONCodecConfiguration(Charset charset, boolean ignoreNull, boolean ignoreMissingFields, boolean supportClassAttribute, JSONParserFactory parserFactory, JSONFormatter formatter) {
+	public JSONCodecConfiguration(Charset charset, boolean ignoreNull, boolean ignoreMissingFields, boolean supportClassAttribute, JSONParserFactory parserFactory, JSONFormatter formatter, JSONMappingMap mapping) {
 		this.charset = charset;
 		this.ignoreNull = ignoreNull;
 		this.ignoreMissingFields = ignoreMissingFields;
 		this.supportClassAttribute = supportClassAttribute;
 		this.parserFactory = parserFactory;
 		this.formatter = formatter;
+		this.mapping = new JSONMappingMap(mapping);
 	}
 
 	public JSONCodecConfiguration charset(Charset charset) {
-		return new JSONCodecConfiguration(charset, ignoreNull, ignoreMissingFields, supportClassAttribute, parserFactory, formatter);
+		return new JSONCodecConfiguration(charset, ignoreNull, ignoreMissingFields, supportClassAttribute, parserFactory, formatter, mapping);
 	}
 	public JSONCodecConfiguration ignoreNull(boolean ignoreNull) {
-		return new JSONCodecConfiguration(charset, ignoreNull, ignoreMissingFields, supportClassAttribute, parserFactory, formatter);
+		return new JSONCodecConfiguration(charset, ignoreNull, ignoreMissingFields, supportClassAttribute, parserFactory, formatter, mapping);
 	}
 	public JSONCodecConfiguration ignoreMissingFields(boolean ignoreMissingFields) {
-		return new JSONCodecConfiguration(charset, ignoreNull, ignoreMissingFields, supportClassAttribute, parserFactory, formatter);
+		return new JSONCodecConfiguration(charset, ignoreNull, ignoreMissingFields, supportClassAttribute, parserFactory, formatter, mapping);
 	}
 	public JSONCodecConfiguration supportClassAttribute(boolean supportClassAttribute) {
-		return new JSONCodecConfiguration(charset, ignoreNull, ignoreMissingFields, supportClassAttribute, parserFactory, formatter);
+		return new JSONCodecConfiguration(charset, ignoreNull, ignoreMissingFields, supportClassAttribute, parserFactory, formatter, mapping);
 	}
 	public JSONCodecConfiguration parserFactory(JSONParserFactory parserFactory) {
-		return new JSONCodecConfiguration(charset, ignoreNull, ignoreMissingFields, supportClassAttribute, parserFactory, formatter);
+		return new JSONCodecConfiguration(charset, ignoreNull, ignoreMissingFields, supportClassAttribute, parserFactory, formatter, mapping);
 	}
 	public JSONCodecConfiguration formatter(JSONFormatter formatter) {
-		return new JSONCodecConfiguration(charset, ignoreNull, ignoreMissingFields, supportClassAttribute, parserFactory, formatter);
+		return new JSONCodecConfiguration(charset, ignoreNull, ignoreMissingFields, supportClassAttribute, parserFactory, formatter, mapping);
+	}
+	public JSONCodecConfiguration mapping(JSONMappingMap mapping) {
+		return new JSONCodecConfiguration(charset, ignoreNull, ignoreMissingFields, supportClassAttribute, parserFactory, formatter, mapping);
+	}
+	public JSONCodecConfiguration mapping(JSONMapping<?,?> mapping) {
+		return new JSONCodecConfiguration(charset, ignoreNull, ignoreMissingFields, supportClassAttribute, parserFactory, formatter, new JSONMappingMap(this.mapping,mapping));
 	}
 }

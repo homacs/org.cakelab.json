@@ -1,4 +1,4 @@
-package org.cakelab.json.codec;
+package org.cakelab.json.util;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

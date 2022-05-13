@@ -4,6 +4,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import org.cakelab.json.codec.JSONCodecConfiguration;
+import org.cakelab.json.codec.JSONMappingMap;
 import org.cakelab.json.format.JSONFormatter;
 import org.cakelab.json.format.JSONFormatterConfiguration;
 import org.cakelab.json.format.JSONFormatterPrettyprint;
@@ -31,11 +32,13 @@ public class JSONDefaults {
 	}
 	
 	public static final JSONParserFactory PARSER_FACTORY = new DefaultParserFactory();
+	
+	public static final JSONMappingMap MAPPING = new JSONMappingMap();
 
 	public static final boolean IGNORE_MISSING_FIELDS = false;
 	public static final boolean SUPPORT_CLASS_ATTRIB = false;
 	
-	public static final JSONCodecConfiguration CODEC_CONFIG = new JSONCodecConfiguration(CHARSET, IGNORE_NULL, IGNORE_MISSING_FIELDS, SUPPORT_CLASS_ATTRIB, PARSER_FACTORY, FORMATTER);
+	public static final JSONCodecConfiguration CODEC_CONFIG = new JSONCodecConfiguration(CHARSET, IGNORE_NULL, IGNORE_MISSING_FIELDS, SUPPORT_CLASS_ATTRIB, PARSER_FACTORY, FORMATTER, MAPPING);
 	
 	public static JSONParser createDefaultParser() {
 		return PARSER_FACTORY.create();
