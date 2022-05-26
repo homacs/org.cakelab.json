@@ -14,25 +14,25 @@ public class TestJSONMapping {
 	private static JSONMapping<Version, String> mapping = new JSONMapping<Version, String>(Version.class, String.class) {
 
 		@Override
-		public String toJson(Version javaValue) {
+		public String toJson(JSONModeller modeller, Version javaValue) {
 			return javaValue.toString();
 		}
 
 		@Override
-		public Version toJava(String jsonValue) {
+		public Version toJava(JSONModeller modeller, String jsonValue) {
 			return new Version(jsonValue);
 		}
 
 		@Override
-		public void toJava(String jsonAny, Version javaValue) {
+		public void toJava(JSONModeller modeller, String jsonAny, Version javaValue) {
 			javaValue.set(jsonAny);
 		}
 	};
 	
 	@Test
-	public void testJSONMappingMap() {
+	public void testJSONMappingMap() throws JSONException {
 		JSONMappingMap orig = new JSONMappingMap();
-		
+		JSONModeller modeller = new JSONModeller(new JSONCodecConfiguration());
 		JSONMappingMap newSet = orig.add(mapping);
 		assertNotNull(newSet);
 		
@@ -47,8 +47,8 @@ public class TestJSONMapping {
 		m = newSet.get(mapping.javaType, mapping.jsonType);
 		assertNotNull(m);
 
-		Version javaValue = m.toJava("1.0");
-		String jsonValue = m.toJson(javaValue);
+		Version javaValue = m.toJava(modeller, "1.0");
+		String jsonValue = m.toJson(modeller, javaValue);
 		assertNotNull(jsonValue);
 	}
 

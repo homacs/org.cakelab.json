@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.cakelab.json.JSONException;
+
 public class JSONMappingMap {
 	private Map<Class<?>, Map<Class<?>,JSONMapping<?,?>>> entries = new HashMap<>();
 
@@ -52,30 +54,30 @@ public class JSONMappingMap {
 		return (JSONMapping<JAVAT, JSONT>) jsonMap.get(jsonType);
 	}
 
-	public <T> T toJava(Object jsonAny, Class<T> javaType) {
+	public <T> T toJava(JSONModeller modeller, Object jsonAny, Class<T> javaType) throws JSONException {
 		@SuppressWarnings("unchecked")
 		JSONMapping<T, Object> mapping =  (JSONMapping<T, Object>) get(javaType, jsonAny.getClass());
 		if (mapping != null) {
-			return mapping.toJava(jsonAny);
+			return mapping.toJava(modeller, jsonAny);
 		}
 		return null;
 	}
 
-	public <T> T toJava(Object jsonAny, T targetObject) {
+	public <T> T toJava(JSONModeller modeller, Object jsonAny, T targetObject) throws JSONException {
 		@SuppressWarnings("unchecked")
 		JSONMapping<T, Object> mapping =  (JSONMapping<T, Object>) get(targetObject.getClass(), jsonAny.getClass());
 		if (mapping != null) {
-			mapping.toJava(jsonAny, targetObject);
+			mapping.toJava(modeller, jsonAny, targetObject);
 			return targetObject;
 		}
 		return null;
 	}
 
-	public <T> Object toJson(T javaValue) {
+	public <T> Object toJson(JSONModeller modeller, T javaValue) throws JSONException {
 		@SuppressWarnings("unchecked")
 		JSONMapping<T, Object> mapping =  (JSONMapping<T, Object>) get(javaValue.getClass());
 		if (mapping != null) {
-			return mapping.toJson(javaValue);
+			return mapping.toJson(modeller, javaValue);
 		}
 		return null;
 	}

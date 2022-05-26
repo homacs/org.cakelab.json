@@ -188,7 +188,7 @@ public class JSONModeller {
 		return target;
 	}
 
-	private Object json2primitive(Object jsonValue, Class<?> targetType) {
+	private Object json2primitive(Object jsonValue, Class<?> targetType) throws JSONException {
 		if (jsonValue == null) 
 			return null;
 		
@@ -288,16 +288,16 @@ public class JSONModeller {
 	}
 	
 	
-	private <T> Object tryToJsonMapping(T javaValue) {
-		return cfg.mapping.toJson(javaValue);
+	private <T> Object tryToJsonMapping(T javaValue) throws JSONException {
+		return cfg.mapping.toJson(this, javaValue);
 	}
 	
-	private <T> T tryToJavaMapping(Object jsonAny, T targetObject) {
-		return cfg.mapping.toJava(jsonAny, targetObject);
+	private <T> T tryToJavaMapping(Object jsonAny, T targetObject) throws JSONException {
+		return cfg.mapping.toJava(this, jsonAny, targetObject);
 	}
 
-	private <T> T tryToJavaMapping(Object jsonAny, Class<T> targetType) {
-		return cfg.mapping.toJava(jsonAny, targetType);
+	private <T> T tryToJavaMapping(Object jsonAny, Class<T> targetType) throws JSONException {
+		return cfg.mapping.toJava(this, jsonAny, targetType);
 	}
 	
 	

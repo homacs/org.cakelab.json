@@ -1,5 +1,6 @@
 package org.cakelab.json.codec;
 
+import org.cakelab.json.JSONException;
 
 /**
  * <h3>Warning: Work in progress</h3>
@@ -36,14 +37,15 @@ public abstract class JSONMapping<JAVAT, JSONT> {
 		this.jsonType = jsonType;
 	}
 	
-	/** Implementation maps given javaValue to a valid JSON value. */
-	public abstract JSONT toJson(JAVAT javaValue);
+	/** Implementation maps given javaValue to a valid JSON value. 
+	 * @throws JSONException */
+	public abstract JSONT toJson(JSONModeller modeller, JAVAT javaValue) throws JSONException;
 
 	/** Instantiate a new Java object of type JAVAT and initialise it from JSON value of type JSONT.
 	 * In case the Java value is a constant (such as an enum value) it is suggested 
 	 * to return the matching constant instead. */
-	public abstract JAVAT toJava(JSONT jsonValue);
+	public abstract JAVAT toJava(JSONModeller modeller, JSONT jsonValue) throws JSONException;
 	
 	/** Initialise given javaValue from give jsonValue.  */
-	public abstract void toJava(JSONT jsonAny, JAVAT targetObject);
+	public abstract void toJava(JSONModeller modeller, JSONT jsonAny, JAVAT targetObject) throws JSONException;
 }
