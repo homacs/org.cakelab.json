@@ -62,7 +62,12 @@ public class JSONModeller {
 					return (T) json2object((JSONObject) jsonAny, Memory.newInstance(effectiveType));
 				}
 			} else if (jsonAny instanceof JSONArray) {
-				return (T) json2array((JSONArray) jsonAny, Array.newInstance(targetType.getComponentType(), ((JSONArray) jsonAny).size()));
+				Object targetObject =
+						(targetType.isArray()) ? 
+								Array.newInstance(targetType.getComponentType(), ((JSONArray) jsonAny).size())
+								:
+								Memory.newInstance(targetType);
+				return (T) json2array((JSONArray) jsonAny, targetObject);
 			} else {
 				return (T) json2primitive(jsonAny, targetType);
 			}
