@@ -24,6 +24,7 @@
 		</resources>
 		<sourceDirectory>src</sourceDirectory>
 		<testSourceDirectory>test</testSourceDirectory>
+		<outputDirectory>bin</outputDirectory>
 		<plugins>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>

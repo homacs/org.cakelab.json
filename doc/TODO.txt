@@ -1,0 +1,34 @@
+
+
+
+[-] bugfix: class attribute not set when required (e.g. for array elements).
+[-] feature: introduce proper support of generics (see below)
+[-] feature: support generic mapping of complex data structures
+
+
+
+
+
+
+
+Generics
+========
+
+There are several issues:
+ 1 Java generics (aka templates) do not always carry type information of the given
+   template  parameters at runtime.
+ 2 Some of them, such as ArrayList, store the elements in transient fields, which are
+   filtered by default. 
+ 3 Others have complex inner data structures (such as TreeMap) which are not meant
+   to be marshalled that way.
+
+Different approaches
+ * Provide Marshalling Aware Generics: 
+ * Generic Type Argument: Type arguments are available at runtime in some cases and 
+   especially on field declarations. Given a declaration like this:
+       ArrayList<Integer> list;
+   the type argument can be retrieved like this
+       Field f = getClass().getField("list");
+       ParameterizedType listType = f.getGenericType();
+       Type argumentType = listType.getActualArgumentTypes()[0];
+       Class componentType = (Class)argumentType;
